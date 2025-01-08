@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/backend.iml" filepath="$PROJECT_DIR$/.idea/backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/videoplatform/src/main/java/com/shadowveil/config/config.iml" filepath="$PROJECT_DIR$/videoplatform/src/main/java/com/shadowveil/config/config.iml" />
+      <module fileurl="file://$PROJECT_DIR$/videoplatform/videoplatform.iml" filepath="$PROJECT_DIR$/videoplatform/videoplatform.iml" />
     </modules>
   </component>
 </project>
