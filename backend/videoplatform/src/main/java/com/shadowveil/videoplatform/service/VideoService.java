@@ -71,7 +71,7 @@ public class VideoService {
         existingVideo.setVideoUrl(video.getVideoUrl());
         existingVideo.setDuration(video.getDuration());
         existingVideo.setPosition(video.getPosition());
-        existingVideo.setCourseId(video.getCourseId());
+        existingVideo.setCourse(video.getCourse());
         return videoRepository.save(existingVideo);
     }
 

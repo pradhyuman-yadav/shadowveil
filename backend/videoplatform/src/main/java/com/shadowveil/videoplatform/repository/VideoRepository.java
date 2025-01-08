@@ -21,7 +21,7 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
      * @param courseId the ID of the course
      * @return a list of videos for the given course
      */
-    @Query("SELECT v FROM Video v WHERE v.courseId.id = :courseId")
+    @Query("SELECT v FROM Video v WHERE v.course.id = :courseId")
     List<Video> findByCourseId(@Param("courseId") Long courseId);
 
 }

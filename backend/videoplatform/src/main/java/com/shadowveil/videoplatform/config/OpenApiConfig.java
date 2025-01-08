@@ -20,7 +20,7 @@ public class OpenApiConfig {
                         .termsOfService("https://example.com/terms")
                         .contact(new Contact()
                                 .name("Pradhyuman Yadav")
-                                .email("support@example.com")
+                                .email("pradhyuman999@gmail.com")
                                 .url("https://example.com"))
                         .license(new License()
                                 .name("Apache 2.0")

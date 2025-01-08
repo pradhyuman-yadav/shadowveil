@@ -23,7 +23,7 @@ public class Video {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "course_id", nullable = false)
-    private Course courseId;
+    private Course course;
 
     @Column(name = "title", nullable = false)
     private String title;

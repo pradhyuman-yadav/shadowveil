@@ -3,6 +3,8 @@ package com.shadowveil.videoplatform.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -11,21 +13,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() // Disable CSRF for Swagger and development purposes
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for development purposes
                 .authorizeHttpRequests(auth -> auth
-                        // Allow unrestricted access to Swagger UI and API docs
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
-                        // Allow unrestricted access to the H2 Console
-                        .requestMatchers("/h2-console/**").permitAll()
-                        // Secure all other endpoints
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll() // Allow unrestricted access to all endpoints
                 )
-                // Allow H2 Console frames in browsers
-                .headers(headers -> headers.frameOptions().sameOrigin());
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin) // Allow frames (e.g., H2 console)
+                );
 
         return http.build();
     }
