@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+/frontend-doctor/node_modules
+
+
 # testing
 /coverage
 

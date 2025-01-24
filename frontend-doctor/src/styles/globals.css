@@ -1,0 +1,12 @@
+@import "shaka-player/dist/controls.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+}
