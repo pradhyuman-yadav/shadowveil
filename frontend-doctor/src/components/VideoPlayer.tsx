@@ -1,92 +1,54 @@
-import React, { useEffect, useRef } from "react";
-import shaka from "shaka-player";
-import "shaka-player/dist/controls.css";
-export interface VideoPlayerProps {
-  videoUrl: string;
-  getCurrentTimestamp?: (timestamp: number) => void; // Optional callback for timestamps
-  captionsEnabled?: boolean; // Enable or disable captions
-  nextVideoUrl?: string; // URL for autoplaying the next video
+import React, { useRef, useEffect } from "react";
+
+interface VideoPlayerProps {
+  videoUrl?: string; // Optional video URL
+  getCurrentTimestamp?: (timestamp: number) => void;
 }
 
-export default function VideoPlayer({
-  videoUrl,
-  getCurrentTimestamp,
-  captionsEnabled = true,
-  nextVideoUrl,
-}: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl, getCurrentTimestamp }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    shaka.polyfill.installAll();
-    if (!videoRef.current || !containerRef.current) return;
-
-    const initializeShakaPlayer = () => {
-      if (!shaka.ui) {
-        console.error("Shaka UI library not loaded");
-        return;
+    if (!videoRef.current) return;
+  
+    const videoElement = videoRef.current;
+  
+    const handleTimeUpdate = () => {
+      if (getCurrentTimestamp) {
+        getCurrentTimestamp(videoElement.currentTime); // Pass the updated currentTime
       }
-      if (!videoRef.current || !containerRef.current) {
-        console.error("Video element or container not found.");
-        return;
-      }
-
-      // Initialize Shaka Player
-      const player = new shaka.Player(videoRef.current);
-      const ui = new shaka.ui.Overlay(player, containerRef.current, videoRef.current);
-
-      // Configure Shaka Player
-      if (captionsEnabled) {
-        player.configure({
-          textDisplayFactory: shaka.ui.TextDisplayer,
-        });
-      }
-
-      // Load the video
-      player
-        .load(videoUrl)
-        .then(() => console.log("Video loaded successfully!"))
-        .catch((error: shaka.util.Error) =>
-          console.error("Error loading video:", error)
-        );
-
-      // Track timestamps
-      const handleTimeUpdate = () => {
-        if (videoRef.current && getCurrentTimestamp) {
-          getCurrentTimestamp(videoRef.current.currentTime);
-        }
-      };
-
-      // Autoplay next video
-      const handleVideoEnded = () => {
-        if (nextVideoUrl) {
-          player
-            .unload()
-            .then(() => player.load(nextVideoUrl))
-            .catch((error: shaka.util.Error) =>
-              console.error("Error loading next video:", error)
-            );
-        }
-      };
-
-      videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
-      videoRef.current.addEventListener("ended", handleVideoEnded);
-
-      // Cleanup
-      return () => {
-        videoRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
-        videoRef.current?.removeEventListener("ended", handleVideoEnded);
-        ui.destroy();
-        player.destroy();
-      };
     };
+  
+    videoElement.addEventListener("timeupdate", handleTimeUpdate);
+  
+    return () => {
+      videoElement.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [getCurrentTimestamp]); // Ensure the callback is properly registered
+  
 
-    initializeShakaPlayer();
-  }, [videoUrl, getCurrentTimestamp, captionsEnabled, nextVideoUrl]);
+  if (!videoUrl) {
+    return (
+      <div className="text-center text-gray-500 bg-gray-200 p-4 rounded-lg">
+        No video source available.
+      </div>
+    );
+  }
 
   return (
-    <div ref={containerRef} className="shaka-container w-full rounded-lg">
-      <video ref={videoRef} className="w-full h-auto" controls />
+    <div className="w-full max-w-3xl mx-auto my-4">
+      <div className="relative w-full h-0 pb-[56.25%]"> 
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          controls
+          preload="auto"
+          className="absolute top-0 left-0 w-full h-full rounded-lg"
+          style={{ backgroundColor: "black" }}
+        />
+      </div>
     </div>
   );
-}
+};
+
+export default VideoPlayer;
