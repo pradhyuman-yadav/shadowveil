@@ -12,6 +12,11 @@
 
 /frontend-doctor/node_modules
 
+#Backend
+backend/videoplatform/.idea
+backend/videoplatform/target
+
+
 
 # testing
 /coverage
