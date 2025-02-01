@@ -2,14 +2,12 @@ package com.shadowveil.videoplatform.controller;
 
 import com.shadowveil.videoplatform.entity.Video;
 import com.shadowveil.videoplatform.service.VideoService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * REST Controller for Video entity
- */
 @RestController
 @RequestMapping("/api/videos")
 public class VideoController {
@@ -20,76 +18,50 @@ public class VideoController {
         this.videoService = videoService;
     }
 
-    /**
-     * GET /api/videos
-     *
-     * @return a list of all videos
-     */
+    // GET /api/videos
     @GetMapping
-    public List<Video> getAllVideos() {
-        return videoService.findAllVideos();
+    public ResponseEntity<List<Video>> getAllVideos() {
+        List<Video> videos = videoService.getAllVideos();
+        return ResponseEntity.ok(videos);
     }
 
-    /**
-     * GET /api/videos/{id}
-     *
-     * @param id the ID of the video
-     * @return the Video with the given ID
-     */
+    // GET /api/videos/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Video> getVideoById(@PathVariable Long id) {
-        Video video = videoService.findVideoById(id);
-        return ResponseEntity.ok(video);
+    public ResponseEntity<Video> getVideoById(@PathVariable Integer id) {
+        return videoService.getVideoById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * GET /api/videos/course/{courseId}
-     *
-     * @param courseId the ID of the course
-     * @return a list of videos for the given course
-     */
-    @GetMapping("/course/{courseId}")
-    public List<Video> getVideosByCourseId(@PathVariable Long courseId) {
-        return videoService.findVideosByCourseId(courseId);
-    }
-
-    /**
-     * POST /api/videos
-     *
-     * @param video the Video to create
-     * @return the created Video
-     */
+    // POST /api/videos
     @PostMapping
-    public ResponseEntity<Video> createVideo(@RequestBody Video video) {
+    public ResponseEntity<Video> createVideo(@Valid @RequestBody Video video) {
         Video createdVideo = videoService.createVideo(video);
         return ResponseEntity.ok(createdVideo);
     }
 
-    /**
-     * PUT /api/videos/{id}
-     *
-     * @param id    the ID of the video to update
-     * @param video the updated video data
-     * @return the updated Video
-     */
+    // PUT /api/videos/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Video> updateVideo(
-            @PathVariable Long id,
-            @RequestBody Video video
-    ) {
-        Video updatedVideo = videoService.updateVideo(id, video);
-        return ResponseEntity.ok(updatedVideo);
+    public ResponseEntity<Video> updateVideo(@PathVariable Integer id, @Valid @RequestBody Video video) {
+        try {
+            Video updatedVideo = videoService.updateVideo(id, video);
+            return ResponseEntity.ok(updatedVideo);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    /**
-     * DELETE /api/videos/{id}
-     *
-     * @param id the ID of the video to delete
-     * @return a no-content response
-     */
+    // DELETE /api/videos/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVideo(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteVideo(@PathVariable Integer id) {
         videoService.deleteVideo(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // GET /api/videos/user/{userId}
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Video>> getVideosByUserId(@PathVariable Integer userId) {
+        List<Video> videos = videoService.getVideosByUserId(userId);
+        return ResponseEntity.ok(videos);
     }
 }

@@ -1,50 +1,47 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "subscriptions")
+@Table(name = "subscriptions", schema = "public")
 public class Subscription {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "subscriptions_id_gen")
-    @SequenceGenerator(name = "subscriptions_id_gen", sequenceName = "subscriptions_subscription_id_seq", allocationSize = 1)
-    @Column(name = "subscription_id", nullable = false)
-    private Long id;
+    @ColumnDefault("nextval('subscriptions_id_seq')")
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "plan_name", nullable = false, length = 100)
-    private String planName;
+    @Size(max = 50)
+    @NotNull
+    @Column(name = "plan", nullable = false, length = 50)
+    private String plan;
 
+    @NotNull
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    private Instant startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private Instant endDate;
 
+    @Size(max = 20)
     @ColumnDefault("'active'")
-    @Column(name = "status", nullable = false, length = 50)
+    @Column(name = "status", length = 20)
     private String status;
-
-    @ColumnDefault("now()")
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
-
-    @ColumnDefault("now()")
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
 
 }

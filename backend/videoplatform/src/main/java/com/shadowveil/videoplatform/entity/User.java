@@ -1,42 +1,53 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "public", uniqueConstraints = {
+        @UniqueConstraint(name = "users_username_key", columnNames = {"username"}),
+        @UniqueConstraint(name = "users_email_key", columnNames = {"email"})
+})
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "users_id_gen")
-    @SequenceGenerator(name = "users_id_gen", sequenceName = "users_user_id_seq", allocationSize = 1)
-    @Column(name = "user_id", nullable = false)
-    private Long id;
+    @ColumnDefault("nextval('users_id_seq')")
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-    @Column(name = "full_name", nullable = false, length = 100)
-    private String fullName;
+    @Size(max = 50)
+    @NotNull
+    @Column(name = "username", nullable = false, length = 50)
+    private String username;
 
-    @Column(name = "email", nullable = false)
+    @Size(max = 100)
+    @NotNull
+    @Column(name = "email", nullable = false, length = 100)
     private String email;
 
+    @Size(max = 255)
+    @NotNull
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @ColumnDefault("'student'")
-    @Column(name = "role", nullable = false, length = 50)
+    @Size(max = 20)
+    @ColumnDefault("'user'")
+    @Column(name = "role", length = 20)
     private String role;
 
-    @ColumnDefault("now()")
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
+    private Instant createdAt;
 
-    @ColumnDefault("now()")
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
 }

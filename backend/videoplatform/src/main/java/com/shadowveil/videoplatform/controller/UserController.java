@@ -2,95 +2,59 @@ package com.shadowveil.videoplatform.controller;
 
 import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * REST Controller for User entity
- */
 @RestController
-@RequestMapping("/api/users")  // Base path for user-related APIs
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
 
-    // Constructor Injection
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    /**
-     * GET /api/users
-     *
-     * @return a list of all users
-     */
+    // GET /api/users
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.findAllUsers();
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 
-    /**
-     * GET /api/users/{id}
-     *
-     * @param id the ID of the user
-     * @return the User with the given ID
-     */
+    // GET /api/users/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        User user = userService.findUserById(id);
-        return ResponseEntity.ok(user);
-    }
-
-    /**
-     * GET /api/users/email
-     *
-     * @param email the email of the user
-     * @return the User with the given email
-     */
-    @GetMapping("/email")
-    public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
-        return userService.findUserByEmail(email)
+    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
+        return userService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * POST /api/users
-     *
-     * @param user the User to create
-     * @return the created User
-     */
+    // POST /api/users
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         User createdUser = userService.createUser(user);
         return ResponseEntity.ok(createdUser);
     }
 
-    /**
-     * PUT /api/users/{id}
-     *
-     * @param id   the ID of the user to update
-     * @param user the updated user data
-     * @return the updated User
-     */
+    // PUT /api/users/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        User updatedUser = userService.updateUser(id, user);
-        return ResponseEntity.ok(updatedUser);
+    public ResponseEntity<User> updateUser(@PathVariable Integer id, @Valid @RequestBody User user) {
+        try {
+            User updatedUser = userService.updateUser(id, user);
+            return ResponseEntity.ok(updatedUser);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    /**
-     * DELETE /api/users/{id}
-     *
-     * @param id the ID of the user to delete
-     * @return a no-content response
-     */
+    // DELETE /api/users/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 }
-

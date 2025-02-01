@@ -1,48 +1,77 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "videos")
+@Table(name = "videos", schema = "public", indexes = {
+        @Index(name = "idx_videos_user_id", columnList = "user_id")
+})
 public class Video {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "videos_id_gen")
-    @SequenceGenerator(name = "videos_id_gen", sequenceName = "videos_video_id_seq", allocationSize = 1)
-    @Column(name = "video_id", nullable = false)
-    private Long id;
+    @ColumnDefault("nextval('videos_id_seq')")
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    @JoinColumn(name = "user_id")
+    private User user;
 
+    @Size(max = 255)
+    @NotNull
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "video_url", nullable = false, length = Integer.MAX_VALUE)
-    private String videoUrl;
+    @Column(name = "description", length = Integer.MAX_VALUE)
+    private String description;
 
-    @Column(name = "duration")
+    @Size(max = 512)
+    @NotNull
+    @Column(name = "url", nullable = false, length = 512)
+    private String url;
+
+    @Size(max = 512)
+    @Column(name = "thumbnail_url", length = 512)
+    private String thumbnailUrl;
+
+    @NotNull
+    @Column(name = "duration", nullable = false)
     private Integer duration;
 
-    @Column(name = "\"position\"")
-    private Integer position;
+    @Size(max = 20)
+    @ColumnDefault("'public'")
+    @Column(name = "status", length = 20)
+    private String status;
 
-    @ColumnDefault("now()")
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+    @ColumnDefault("0")
+    @Column(name = "views")
+    private Long views;
 
-    @ColumnDefault("now()")
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    @ColumnDefault("0")
+    @Column(name = "likes")
+    private Long likes;
+
+    @ColumnDefault("0")
+    @Column(name = "dislikes")
+    private Long dislikes;
+
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
 }
