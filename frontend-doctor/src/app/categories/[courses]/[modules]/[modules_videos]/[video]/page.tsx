@@ -8,6 +8,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import API_BASE_URL from "@/config/apiConfig";
 import { fetchVideosByModuleId, Video } from "@/data/videos";
+import Advertisement from "@/components/Advertisement";
 
 export default function VideoPage() {
   const searchParams = useSearchParams();
@@ -107,6 +108,7 @@ export default function VideoPage() {
           <VideoPlayer videoUrl={video.url} getCurrentTimestamp={(timestamp) => setCurrentTimestamp(timestamp)} />
           <p className="text-gray-700 mt-4">{video.description}</p>
 
+          <Advertisement />
           {/* Notes Section */}
           <Notes
             currentTimestamp={currentTimestamp}

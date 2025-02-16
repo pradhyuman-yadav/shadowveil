@@ -755,17 +755,17 @@ function VideoPage() {
                     children: "Loading..."
                 }, void 0, false, {
                     fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                    lineNumber: 66,
+                    lineNumber: 67,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                lineNumber: 65,
+                lineNumber: 66,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-            lineNumber: 64,
+            lineNumber: 65,
             columnNumber: 7
         }, this);
     }
@@ -778,17 +778,17 @@ function VideoPage() {
                     children: error
                 }, void 0, false, {
                     fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                    lineNumber: 76,
+                    lineNumber: 77,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                lineNumber: 75,
+                lineNumber: 76,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-            lineNumber: 74,
+            lineNumber: 75,
             columnNumber: 7
         }, this);
     }
@@ -804,7 +804,7 @@ function VideoPage() {
                             children: "Videos in this module"
                         }, void 0, false, {
                             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                            lineNumber: 87,
+                            lineNumber: 88,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
@@ -816,23 +816,23 @@ function VideoPage() {
                                         children: vid.title
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                                        lineNumber: 91,
+                                        lineNumber: 92,
                                         columnNumber: 17
                                     }, this)
                                 }, vid.id, false, {
                                     fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                                    lineNumber: 90,
+                                    lineNumber: 91,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                            lineNumber: 88,
+                            lineNumber: 89,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                    lineNumber: 86,
+                    lineNumber: 87,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -843,7 +843,7 @@ function VideoPage() {
                             children: video.title
                         }, void 0, false, {
                             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                            lineNumber: 106,
+                            lineNumber: 107,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$VideoPlayer$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -851,7 +851,7 @@ function VideoPage() {
                             getCurrentTimestamp: (timestamp)=>setCurrentTimestamp(timestamp)
                         }, void 0, false, {
                             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                            lineNumber: 107,
+                            lineNumber: 108,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -859,7 +859,7 @@ function VideoPage() {
                             children: video.description
                         }, void 0, false, {
                             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                            lineNumber: 108,
+                            lineNumber: 109,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$Notes$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -872,24 +872,24 @@ function VideoPage() {
                             setNotes: ()=>{}
                         }, void 0, false, {
                             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                            lineNumber: 111,
+                            lineNumber: 112,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-                    lineNumber: 105,
+                    lineNumber: 106,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-            lineNumber: 84,
+            lineNumber: 85,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/categories/[courses]/[modules]/[modules_videos]/[video]/page.tsx",
-        lineNumber: 83,
+        lineNumber: 84,
         columnNumber: 5
     }, this);
 }
