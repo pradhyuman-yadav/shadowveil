@@ -28,7 +28,7 @@
       "**/*.ts",
       "**/*.tsx",
       ".next/types/**/*.ts"
-    ],
+, "src/app/test/testfetch.js"    ],
     "exclude": ["node_modules"]
   }
   

@@ -1,5 +1,4 @@
 "use client";
-
 import CourseCompleted from "../../components/CourseCompleted";
 import CompletionGraph from "../../components/CompletionGraph";
 import TimeSpent from "@/components/TimeSpent";
@@ -26,8 +25,8 @@ export default function DashboardPage() {
       <section className="mb-8">
         <Certifications/>
       </section>
-
     </div>
     </Layout>
   );
 }
+

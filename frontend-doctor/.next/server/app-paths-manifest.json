@@ -6,5 +6,6 @@
   "/categories/[courses]/page": "app/categories/[courses]/page.js",
   "/categories/[courses]/[modules]/page": "app/categories/[courses]/[modules]/page.js",
   "/categories/[courses]/[modules]/[modules_videos]/page": "app/categories/[courses]/[modules]/[modules_videos]/page.js",
-  "/categories/[courses]/[modules]/[modules_videos]/[video]/page": "app/categories/[courses]/[modules]/[modules_videos]/[video]/page.js"
+  "/categories/[courses]/[modules]/[modules_videos]/[video]/page": "app/categories/[courses]/[modules]/[modules_videos]/[video]/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
 }
