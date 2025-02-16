@@ -59,13 +59,13 @@ const AdvertisementCarousel = () => {
       {/* Left Navigation Button */}
       <button
         onClick={prevSlide}
-        className="absolute left-2 top-1/2 transform -translate-y-1/2 p-2 bg-white shadow-lg rounded-full hover:bg-gray-200 transition-all"
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 p-3 bg-white shadow-md rounded-full hover:bg-gray-200 transition-all z-10"
       >
-        <ChevronLeft className="h-6 w-6 text-gray-700" />
+        <ChevronLeft className="h-6 w-6 text-blue-500" />
       </button>
 
       {/* Advertisement Content */}
-      <div className="overflow-hidden relative bg-yellow-200 p-6 rounded-lg shadow-md border-2 border-red-500">
+      <div className="overflow-hidden relative bg-white p-6 rounded-lg shadow-lg border-2 border-blue-500">
         <AnimatePresence mode="wait">
           <motion.a
             key={ads[currentIndex].id}
@@ -81,9 +81,9 @@ const AdvertisementCarousel = () => {
             <img
               src={ads[currentIndex].imageUrl}
               alt={ads[currentIndex].title}
-              className="w-full h-40 object-cover rounded-lg mb-4"
+              className="w-full h-40 object-cover rounded-lg mb-4 shadow-sm"
             />
-            <h2 className="text-xl font-bold mb-2 text-gray-800">
+            <h2 className="text-xl font-bold mb-2 text-gray-900">
               {ads[currentIndex].title}
             </h2>
             <p className="text-gray-700">{ads[currentIndex].content}</p>
@@ -94,9 +94,9 @@ const AdvertisementCarousel = () => {
       {/* Right Navigation Button */}
       <button
         onClick={nextSlide}
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-white shadow-lg rounded-full hover:bg-gray-200 transition-all"
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-3 bg-white shadow-md rounded-full hover:bg-gray-200 transition-all z-10"
       >
-        <ChevronRight className="h-6 w-6 text-gray-700" />
+        <ChevronRight className="h-6 w-6 text-blue-500" />
       </button>
     </div>
   );

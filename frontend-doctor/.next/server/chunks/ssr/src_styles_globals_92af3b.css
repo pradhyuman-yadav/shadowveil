@@ -704,6 +704,11 @@ img, video {
   border-color: rgb(234 179 8 / var(--tw-border-opacity, 1));
 }
 
+.border-blue-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
+}
+
 .bg-background {
   background-color: hsl(var(--background));
 }
