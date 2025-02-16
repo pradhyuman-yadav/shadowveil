@@ -1,0 +1,10 @@
+{
+  "/page": "app/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/categories/page": "app/categories/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/categories/[courses]/page": "app/categories/[courses]/page.js",
+  "/categories/[courses]/[modules]/page": "app/categories/[courses]/[modules]/page.js",
+  "/categories/[courses]/[modules]/[modules_videos]/page": "app/categories/[courses]/[modules]/[modules_videos]/page.js",
+  "/categories/[courses]/[modules]/[modules_videos]/[video]/page": "app/categories/[courses]/[modules]/[modules_videos]/[video]/page.js"
+}
