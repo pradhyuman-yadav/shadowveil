@@ -1,10 +1,12 @@
-// File: src/main/java/com/shadowveil/videoplatform/service/NotificationService.java
+// src/main/java/com/shadowveil/videoplatform/service/NotificationService.java
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.NotificationDto;
 import com.shadowveil.videoplatform.entity.Notification;
 import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.repository.NotificationRepository;
 import com.shadowveil.videoplatform.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,7 @@ import java.util.Optional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository; // Inject UserRepository
+    private final UserRepository userRepository;
 
     @Autowired
     public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository) {
@@ -28,8 +30,8 @@ public class NotificationService {
         return notificationRepository.findAll();
     }
 
-    public Optional<Notification> getNotificationById(Integer id) {
-        return notificationRepository.findById(id);
+    public Notification getNotificationById(Integer id) {
+        return notificationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Notification not found with id: " + id));
     }
 
     public List<Notification> getNotificationsByUserId(Integer userId) {
@@ -41,52 +43,32 @@ public class NotificationService {
     }
 
     @Transactional
-    public Notification createNotification(Notification notification) {
-        // Validate that the user exists
-        Optional<User> user = userRepository.findById(notification.getUser().getId());
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException("User with ID " + notification.getUser().getId() + " not found.");
-        }
+    public Notification createNotification(NotificationDto.Request requestDto) {
+        User user = userRepository.findById(requestDto.userId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + requestDto.userId()));
 
-        notification.setUser(user.get());
-        notification.setIsRead(false); // Set isRead to false by default
-        // notification.setCreatedAt(Instant.now());// Removed to use DB default
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(requestDto.message());
+        notification.setIsRead(false); // Always false on creation
+        // createdAt is handled by the database
+
         return notificationRepository.save(notification);
     }
 
+
     @Transactional
-    public Notification updateNotification(Integer id, Notification notificationDetails) {
-        Optional<Notification> optionalNotification = notificationRepository.findById(id);
-        if (optionalNotification.isPresent()) {
-            Notification existingNotification = optionalNotification.get();
+    public Notification updateNotification(Integer id, NotificationDto.UpdateIsReadRequest updateDto) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Notification not found with id: " + id));
 
-            // Validate user, if user is being changed
-            if(notificationDetails.getUser() != null && !notificationDetails.getUser().getId().equals(existingNotification.getUser().getId())){
-                Optional<User> user = userRepository.findById(notificationDetails.getUser().getId());
-                if(user.isEmpty()){
-                    throw new IllegalArgumentException("User with ID " + notificationDetails.getUser().getId() + " does not exists");
-                }
-                existingNotification.setUser(user.get());
-            }
-
-            existingNotification.setMessage(notificationDetails.getMessage());
-            existingNotification.setIsRead(notificationDetails.getIsRead()); // Allow updating isRead
-            // You typically wouldn't update createdAt
-
-            return notificationRepository.save(existingNotification);
-        } else {
-            return null; // Or throw an exception
-        }
+        notification.setIsRead(updateDto.isRead());
+        return notificationRepository.save(notification);
     }
-
     @Transactional
     public void deleteNotification(Integer id) {
-        if(notificationRepository.existsById(id)){
-            notificationRepository.deleteById(id);
-        }
-        else{
-            throw new IllegalArgumentException("Notification with ID " + id + " does not exists");
-        }
-
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Notification not found with id: " + id));
+        notificationRepository.delete(notification);
     }
 }

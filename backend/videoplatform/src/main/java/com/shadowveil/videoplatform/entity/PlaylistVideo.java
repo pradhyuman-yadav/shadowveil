@@ -1,9 +1,12 @@
+// src/main/java/com/shadowveil/videoplatform/entity/PlaylistVideo.java
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -14,6 +17,8 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "playlist_videos", schema = "public")
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class PlaylistVideo {
     @EmbeddedId
     private PlaylistVideoId id;

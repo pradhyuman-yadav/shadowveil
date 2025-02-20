@@ -1,12 +1,13 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -19,6 +20,8 @@ import java.time.Instant;
 @Table(name = "videos", schema = "public", indexes = {
         @Index(name = "idx_videos_user_id", columnList = "user_id")
 })
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class Video {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,50 +33,54 @@ public class Video {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Size(max = 255, message = "Video title must be less than 255 characters")
-    @NotBlank(message = "Video title cannot be blank")
-    @Column(name = "title", nullable = false)
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "title", nullable = false, length = 255)
     private String title;
 
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @Size(max = 512, message = "Video URL must be less than 512 characters")
-    @NotBlank(message = "Video URL cannot be blank")
+    @Size(max = 512)
+    @NotNull
     @Column(name = "url", nullable = false, length = 512)
     private String url;
 
-    @Size(max = 512, message = "Thumbnail URL must be less than 512 characters")
+    @Size(max = 512)
     @Column(name = "thumbnail_url", length = 512)
-    private String thumbnailUrl;
+    private String thumbnailUrl; // Correct field name
 
-    @NotNull(message = "Video duration cannot be null")
+    @NotNull
     @Column(name = "duration", nullable = false)
     private Integer duration;
 
     @Size(max = 20)
+    @ColumnDefault("'public'")
     @Column(name = "status", length = 20)
     private String status;
 
-    @Column(name = "views")
+    @ColumnDefault("0")
+    @Column(name = "\"views\"")
     private Long views;
 
+    @ColumnDefault("0")
     @Column(name = "likes")
     private Long likes;
 
+    @ColumnDefault("0")
     @Column(name = "dislikes")
     private Long dislikes;
 
-    @CreationTimestamp
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @UpdateTimestamp
     @Column(name = "updated_at")
+    @UpdateTimestamp
     private Instant updatedAt;
 
-    // Add this for the Module relationship
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "module_id") // Foreign key column, can be nullable
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "module_id")
     private Module module;
 }

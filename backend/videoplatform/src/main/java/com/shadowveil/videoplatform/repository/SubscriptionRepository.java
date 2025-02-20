@@ -1,3 +1,4 @@
+//(No changes needed, it is well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.Subscription;
@@ -8,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, Integer> {
-
-    // Retrieve subscriptions for a specific user.
     List<Subscription> findByUser_Id(Integer userId);
+    // Add pagination if needed:
+    // List<Subscription> findByUser_Id(Integer userId, Pageable pageable);
 }

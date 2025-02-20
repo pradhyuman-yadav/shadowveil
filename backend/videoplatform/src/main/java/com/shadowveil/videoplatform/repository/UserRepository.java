@@ -1,4 +1,4 @@
-// src/main/java/com/shadowveil/videoplatform/repository/UserRepository.java
+// (No changes needed, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.User;

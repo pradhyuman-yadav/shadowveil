@@ -1,4 +1,4 @@
-// File: src/main/java/com/shadowveil/videoplatform/repository/VideoTranscriptRepository.java
+//(No change needed, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.VideoTranscript;

@@ -1,4 +1,4 @@
-// File: src/main/java/com/shadowveil/videoplatform/repository/TagRepository.java
+// (No major changes, but added a potentially useful method)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.Tag;
@@ -10,7 +10,6 @@ import java.util.List;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Integer> {
-    // Find a tag by its name (useful because of the unique constraint)
     Optional<Tag> findByName(String name);
-    List<Tag> findByNameContainingIgnoreCase(String name);
+    List<Tag> findByNameContainingIgnoreCase(String name); // Useful for search
 }

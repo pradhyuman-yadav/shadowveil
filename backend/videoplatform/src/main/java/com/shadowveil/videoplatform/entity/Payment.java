@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -18,14 +20,16 @@ import java.time.Instant;
 @Table(name = "payments", schema = "public", indexes = {
         @Index(name = "idx_payments_user_id", columnList = "user_id")
 })
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class Payment {
     @Id
-    @ColumnDefault("nextval('payments_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Correct way
     @Column(name = "id", nullable = false)
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.CASCADE) // Or SET NULL, depending on requirements
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -43,7 +47,7 @@ public class Payment {
     private String currency;
 
     @Size(max = 20)
-    @ColumnDefault("'completed'")
+    @ColumnDefault("'completed'") // Consider 'pending' as initial status
     @Column(name = "status", length = 20)
     private String status;
 

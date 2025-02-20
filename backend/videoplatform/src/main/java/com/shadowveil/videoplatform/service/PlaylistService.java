@@ -1,55 +1,78 @@
+// src/main/java/com/shadowveil/videoplatform/service/PlaylistService.java
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.PlaylistDto;
 import com.shadowveil.videoplatform.entity.Playlist;
+import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.repository.PlaylistRepository;
+import com.shadowveil.videoplatform.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PlaylistService {
 
     private final PlaylistRepository playlistRepository;
+    private final UserRepository userRepository; // Inject UserRepository
 
-    public PlaylistService(PlaylistRepository playlistRepository) {
+    @Autowired
+    public PlaylistService(PlaylistRepository playlistRepository, UserRepository userRepository) {
         this.playlistRepository = playlistRepository;
+        this.userRepository = userRepository;
     }
 
-    // Retrieve all playlists.
     public List<Playlist> getAllPlaylists() {
         return playlistRepository.findAll();
     }
 
-    // Retrieve a single playlist by its ID.
-    public Optional<Playlist> getPlaylistById(Integer id) {
-        return playlistRepository.findById(id);
+    public Playlist getPlaylistById(Integer id) { // Changed return type
+        return playlistRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Playlist not found with ID: " + id));
     }
 
-    // Create a new playlist.
-    public Playlist createPlaylist(Playlist playlist) {
+    @Transactional
+    public Playlist createPlaylist(PlaylistDto.Request requestDto) {
+        Playlist playlist = new Playlist();
+
+        // Handle optional user association
+        if (requestDto.userId() != null) {
+            User user = userRepository.findById(requestDto.userId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + requestDto.userId()));
+            playlist.setUser(user);
+        }
+
+        playlist.setName(requestDto.name());
+        playlist.setDescription(requestDto.description());
+        playlist.setVisibility(requestDto.visibility());
+
         return playlistRepository.save(playlist);
     }
 
-    // Update an existing playlist.
-    public Playlist updatePlaylist(Integer id, Playlist playlistDetails) {
-        return playlistRepository.findById(id).map(playlist -> {
-            playlist.setUser(playlistDetails.getUser());
-            playlist.setName(playlistDetails.getName());
-            playlist.setDescription(playlistDetails.getDescription());
-            playlist.setVisibility(playlistDetails.getVisibility());
-            // Typically, createdAt is not updated; only updatedAt is changed.
-            playlist.setUpdatedAt(playlistDetails.getUpdatedAt());
-            return playlistRepository.save(playlist);
-        }).orElseThrow(() -> new RuntimeException("Playlist not found with id " + id));
+    @Transactional
+    public Playlist updatePlaylist(Integer id, PlaylistDto.UpdateRequest updateRequestDto) {
+        Playlist playlist = playlistRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Playlist not found with id: " + id));
+
+        // Update fields based on the DTO
+        playlist.setName(updateRequestDto.name());
+        playlist.setDescription(updateRequestDto.description());
+        playlist.setVisibility(updateRequestDto.visibility());
+        // updatedAt is handled automatically by @UpdateTimestamp
+
+        return playlistRepository.save(playlist);
     }
 
-    // Delete a playlist by its ID.
+    @Transactional
     public void deletePlaylist(Integer id) {
-        playlistRepository.deleteById(id);
+        Playlist playlist = playlistRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Playlist not found with id: " + id));
+        playlistRepository.delete(playlist);
     }
 
-    // Retrieve playlists by a given user ID.
     public List<Playlist> getPlaylistsByUserId(Integer userId) {
         return playlistRepository.findByUser_Id(userId);
     }

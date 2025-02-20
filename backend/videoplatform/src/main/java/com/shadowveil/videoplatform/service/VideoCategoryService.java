@@ -1,59 +1,89 @@
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.VideoCategoryDto;
+import com.shadowveil.videoplatform.entity.Category;
+import com.shadowveil.videoplatform.entity.Video;
 import com.shadowveil.videoplatform.entity.VideoCategory;
 import com.shadowveil.videoplatform.entity.VideoCategoryId;
+import com.shadowveil.videoplatform.repository.CategoryRepository;
 import com.shadowveil.videoplatform.repository.VideoCategoryRepository;
+import com.shadowveil.videoplatform.repository.VideoRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class VideoCategoryService {
 
     private final VideoCategoryRepository videoCategoryRepository;
+    private final VideoRepository videoRepository; // Inject
+    private final CategoryRepository categoryRepository; // Inject
 
-    public VideoCategoryService(VideoCategoryRepository videoCategoryRepository) {
+    @Autowired
+    public VideoCategoryService(VideoCategoryRepository videoCategoryRepository,
+                                VideoRepository videoRepository, CategoryRepository categoryRepository) {
         this.videoCategoryRepository = videoCategoryRepository;
+        this.videoRepository = videoRepository;
+        this.categoryRepository = categoryRepository;
     }
 
-    // Retrieve all video-category associations.
     public List<VideoCategory> getAllVideoCategories() {
         return videoCategoryRepository.findAll();
     }
 
-    // Retrieve a single video-category association by its composite ID.
-    public Optional<VideoCategory> getVideoCategoryById(VideoCategoryId id) {
-        return videoCategoryRepository.findById(id);
+    public VideoCategory getVideoCategoryById(VideoCategoryId id) {
+        return videoCategoryRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("VideoCategory not found with id: " + id));
     }
 
-    // Create a new video-category association.
-    public VideoCategory createVideoCategory(VideoCategory videoCategory) {
+    @Transactional
+    public VideoCategory createVideoCategory(VideoCategoryDto.Request requestDto) {
+        // Validate video and category
+        Video video = videoRepository.findById(requestDto.videoId())
+                .orElseThrow(() -> new EntityNotFoundException("Video not found with id: " + requestDto.videoId()));
+        Category category = categoryRepository.findById(requestDto.categoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + requestDto.categoryId()));
+
+        VideoCategoryId id = new VideoCategoryId(requestDto.videoId(), requestDto.categoryId());
+        VideoCategory videoCategory = new VideoCategory(id, video, category, null); // createdAt by DB
+
         return videoCategoryRepository.save(videoCategory);
     }
 
-    // Update an existing video-category association.
-    public VideoCategory updateVideoCategory(VideoCategoryId id, VideoCategory videoCategoryDetails) {
-        return videoCategoryRepository.findById(id).map(videoCategory -> {
-            // Update fields that are not part of the composite key.
-            // For example, if you want to update a timestamp field, etc.
-            // In this case, we assume only the createdAt field exists (typically not updated) so this method may simply return the existing record.
-            // Adjust accordingly if you add additional updatable fields.
-            return videoCategoryRepository.save(videoCategory);
-        }).orElseThrow(() -> new RuntimeException("VideoCategory not found with id: " + id));
+    @Transactional
+    public VideoCategory updateVideoCategory(VideoCategoryId id, VideoCategoryDto.Request requestDto) {
+        VideoCategory videoCategory = videoCategoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("VideoCategory not found with id " + id));
+
+        // Validate if new video and category IDs are provided.
+        if(!requestDto.videoId().equals(videoCategory.getVideo().getId())){
+            Video video = videoRepository.findById(requestDto.videoId())
+                    .orElseThrow(() -> new EntityNotFoundException("Video with id " + requestDto.videoId() + " not found"));
+            videoCategory.setVideo(video);
+        }
+        if(!requestDto.categoryId().equals(videoCategory.getCategory().getId())){
+            Category category = categoryRepository.findById(requestDto.categoryId())
+                    .orElseThrow(()-> new EntityNotFoundException("Category with id " + requestDto.categoryId() + " not found"));
+            videoCategory.setCategory(category);
+        }
+        videoCategory.setId(new VideoCategoryId(requestDto.videoId(), requestDto.categoryId()));
+        return videoCategoryRepository.save(videoCategory);
     }
 
-    // Delete a video-category association by its composite ID.
+
+    @Transactional
     public void deleteVideoCategory(VideoCategoryId id) {
-        videoCategoryRepository.deleteById(id);
+        VideoCategory videoCategory = videoCategoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("VideoCategory not found with id: " + id));
+        videoCategoryRepository.delete(videoCategory);
     }
 
-    // Retrieve all video-category associations for a specific video.
     public List<VideoCategory> getVideoCategoriesByVideoId(Integer videoId) {
         return videoCategoryRepository.findByVideo_Id(videoId);
     }
 
-    // Retrieve all video-category associations for a specific category.
     public List<VideoCategory> getVideoCategoriesByCategoryId(Integer categoryId) {
         return videoCategoryRepository.findByCategory_Id(categoryId);
     }

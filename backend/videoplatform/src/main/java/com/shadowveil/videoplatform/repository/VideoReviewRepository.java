@@ -1,4 +1,4 @@
-// File: src/main/java/com/shadowveil/videoplatform/repository/VideoReviewRepository.java
+//(No change required, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.VideoReview;

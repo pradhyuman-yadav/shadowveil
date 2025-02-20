@@ -5,8 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.ColumnDefault;
-import com.shadowveil.videoplatform.Util.ReportStatus;
+import com.shadowveil.videoplatform.Util.ReportStatus; // Import the enum
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -16,9 +18,11 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "reports", schema = "public")
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class Report {
     @Id
-    @ColumnDefault("nextval('reports_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Correct
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -37,7 +41,7 @@ public class Report {
     @Column(name = "reported_id", nullable = false)
     private Integer reportedId;
 
-    @Column(name = "reason", length = Integer.MAX_VALUE)
+    @Column(name = "reason") // No need for length = Integer.MAX_VALUE
     private String reason;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
@@ -45,8 +49,8 @@ public class Report {
     private Instant createdAt;
 
     @Size(max = 20)
-    @ColumnDefault("'PENDING'")
+    @ColumnDefault("'PENDING'") // Keep as String in the database
     @Column(name = "status", length = 20)
-    private String status;
+    private String status; // Keep as String in the database
 
 }

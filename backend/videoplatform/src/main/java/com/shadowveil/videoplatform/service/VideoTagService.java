@@ -1,5 +1,6 @@
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.VideoTagDto;
 import com.shadowveil.videoplatform.entity.Tag;
 import com.shadowveil.videoplatform.entity.Video;
 import com.shadowveil.videoplatform.entity.VideoTag;
@@ -7,12 +8,14 @@ import com.shadowveil.videoplatform.entity.VideoTagId;
 import com.shadowveil.videoplatform.repository.TagRepository;
 import com.shadowveil.videoplatform.repository.VideoRepository;
 import com.shadowveil.videoplatform.repository.VideoTagRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class VideoTagService {
@@ -44,36 +47,31 @@ public class VideoTagService {
     public List<VideoTag> getVideoTagsByTagId(Integer tagId) {
         return videoTagRepository.findByTagId(tagId);
     }
-
-    public List<VideoTag> getVideoTagByVideoIdAndTagId(Integer videoId, Integer tagId){
-        return videoTagRepository.findByVideoIdAndTagId(videoId, tagId);
+    public List<VideoTag> getVideoTagsByVideoIdAndTagId(Integer videoId, Integer tagId) {
+        return videoTagRepository.findByVideoIdAndTagId(videoId,tagId);
     }
 
     @Transactional
-    public VideoTag createVideoTag(Integer videoId, Integer tagId) { // Changed signature
+    public VideoTag createVideoTag(VideoTagDto.Request requestDto) { // Changed signature
         // Validate video and tag
-        Optional<Video> video = videoRepository.findById(videoId);  // Use parameters
-        if (video.isEmpty()) {
-            throw new IllegalArgumentException("Video with ID " + videoId + " not found.");
-        }
-        Optional<Tag> tag = tagRepository.findById(tagId);      // Use parameters
-        if (tag.isEmpty()) {
-            throw new IllegalArgumentException("Tag with ID " + tagId + " not found.");
-        }
+        Video video = videoRepository.findById(requestDto.videoId())  // Use parameters
+                .orElseThrow(() -> new EntityNotFoundException("Video with ID " + requestDto.videoId() + " not found."));
+        Tag tag = tagRepository.findById(requestDto.tagId())      // Use parameters
+                .orElseThrow(() -> new EntityNotFoundException("Tag with ID " + requestDto.tagId() + " not found."));
 
         // Check for duplicates (using the more efficient findOneBy... method)
-        if (!videoTagRepository.findByVideoIdAndTagId(videoId, tagId).isEmpty()) {
-            throw new IllegalArgumentException("Video tag with video ID " + videoId + " and tag ID " + tagId + " already exists.");
+        if (videoTagRepository.findOneByVideoIdAndTagId(requestDto.videoId(), requestDto.tagId()).isPresent()) {
+            throw new DataIntegrityViolationException("Video tag with video ID " + requestDto.videoId() + " and tag ID " + requestDto.tagId() + " already exists.");
         }
 
 
         // Create the VideoTag object
         VideoTag videoTag = new VideoTag();
-        videoTag.setVideo(video.get());
-        videoTag.setTag(tag.get());
+        videoTag.setVideo(video);
+        videoTag.setTag(tag);
 
         // Create and set the composite ID (using the constructor!)
-        VideoTagId id = new VideoTagId(videoId, tagId); // Use the constructor!
+        VideoTagId id = new VideoTagId(requestDto.videoId(), requestDto.tagId()); // Use the constructor!
         videoTag.setId(id);
 
 
@@ -81,10 +79,11 @@ public class VideoTagService {
     }
 
 
+
     @Transactional
     public void deleteVideoTag(Integer videoId, Integer tagId) {
         if(videoTagRepository.findByVideoIdAndTagId(videoId, tagId).isEmpty()){
-            throw new IllegalArgumentException("Video Tag with video ID " + videoId+ " and tag ID " + tagId+ " does not exists");
+            throw new EntityNotFoundException("Video Tag with video ID " + videoId+ " and tag ID " + tagId+ " does not exists");
         }
         videoTagRepository.deleteByVideoIdAndTagId(videoId, tagId);
     }

@@ -1,3 +1,4 @@
+//(No change Needed, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.Playlist;
@@ -8,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface PlaylistRepository extends JpaRepository<Playlist, Integer> {
-
-    // Retrieve all playlists belonging to a specific user.
     List<Playlist> findByUser_Id(Integer userId);
+    // Consider pagination:
+    // List<Playlist> findByUser_Id(Integer userId, Pageable pageable);
 }

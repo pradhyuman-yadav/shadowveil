@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -15,9 +17,11 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "sponsorships", schema = "public")
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class Sponsorship {
     @Id
-    @ColumnDefault("nextval('sponsorships_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Correct
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -36,7 +40,7 @@ public class Sponsorship {
     @Column(name = "sponsor_logo_url", length = 512)
     private String sponsorLogoUrl;
 
-    @Column(name = "details", length = Integer.MAX_VALUE)
+    @Column(name = "details") // No need for length
     private String details;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

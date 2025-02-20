@@ -1,17 +1,19 @@
-// File: src/main/java/com/shadowveil/videoplatform/service/UserProfileService.java
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.UserDto;
+import com.shadowveil.videoplatform.dto.UserProfileDto;
 import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.entity.UserProfile;
 import com.shadowveil.videoplatform.repository.UserProfileRepository;
 import com.shadowveil.videoplatform.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserProfileService {
@@ -25,70 +27,96 @@ public class UserProfileService {
         this.userRepository = userRepository;
     }
 
-    public List<UserProfile> getAllUserProfiles() {
-        return userProfileRepository.findAll();
+    public List<UserProfileDto.Response> getAllUserProfiles() {
+        return userProfileRepository.findAll().stream()
+                .map(this::convertToDto).collect(Collectors.toList());
     }
 
-    public Optional<UserProfile> getUserProfileById(Integer id) {
-        return userProfileRepository.findById(id);
+    public UserProfileDto.Response getUserProfileById(Integer id) {
+        return convertToDto(userProfileRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("User profile not found with ID: " + id)));
     }
 
-    public Optional<UserProfile> getUserProfileByUserId(Integer userId) {
-        return userProfileRepository.findByUsersId(userId);
+    public UserProfileDto.Response getUserProfileByUserId(Integer userId) {
+        return convertToDto(userProfileRepository.findByUsersId(userId).orElseThrow(()-> new EntityNotFoundException("User profile not found for User ID: "+ userId)));
     }
 
     @Transactional
-    public UserProfile createUserProfile(UserProfile userProfile) {
-        // Validate that the user exists
-        Optional<User> user = userRepository.findById(userProfile.getId()); // Use getId(), as it's the PK
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException("User with ID " + userProfile.getId() + " not found.");
+    public UserProfile createUserProfile(UserProfileDto.Request requestDto) {
+        // 1. Validate that the user exists
+        User user = userRepository.findById(requestDto.userId())
+                .orElseThrow(() -> new EntityNotFoundException("User with ID " + requestDto.userId() + " not found."));
+
+        // 2. Check if a profile *already* exists (prevent duplicates)
+        if (userProfileRepository.findByUsersId(requestDto.userId()).isPresent()) {
+            throw new DataIntegrityViolationException("A profile already exists for user ID " + requestDto.userId());
         }
 
-        // Check if a profile already exists for this user
-        Optional<UserProfile> existingProfile = userProfileRepository.findByUsersId(userProfile.getId());
-        if (existingProfile.isPresent()) {
-            throw new IllegalArgumentException("A profile already exists for user ID " + userProfile.getId());
-        }
+        // 3. Create the UserProfile entity
+        UserProfile userProfile = new UserProfile();
 
-        userProfile.setUsers(user.get()); // Set the User object
-        userProfile.setUpdatedAt(Instant.now());
+        // 4. **CRITICAL (CORRECTED)**:  Set the *User* entity.  DO NOT set the ID directly.
+        userProfile.setUsers(user);      // Set the associated User entity.  This is what @MapsId uses.
+
+        // 5. Set other fields from the DTO
+        userProfile.setFullName(requestDto.fullName());
+        userProfile.setBio(requestDto.bio());
+        userProfile.setProfilePictureUrl(requestDto.profilePictureUrl());
+        userProfile.setSocialLinks(requestDto.socialLinks());
+
+        // 6. Save the UserProfile.  The ID will be set automatically.
         return userProfileRepository.save(userProfile);
     }
 
+
     @Transactional
-    public UserProfile updateUserProfile(Integer id, UserProfile profileDetails) {
-        Optional<UserProfile> optionalProfile = userProfileRepository.findById(id);
-        if (optionalProfile.isPresent()) {
-            UserProfile existingProfile = optionalProfile.get();
+    public UserProfile updateUserProfile(Integer id, UserProfileDto.UpdateRequest requestDto) {
+        UserProfile existingProfile = userProfileRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User profile not found with id: " + id));
 
-            // No need to check for user existence here, as the profile ID == user ID,
-            // and we already found the profile.
-            if(profileDetails.getUsers() != null && !profileDetails.getUsers().getId().equals(existingProfile.getUsers().getId())){
-                Optional<User> user = userRepository.findById(profileDetails.getUsers().getId());
-                if(user.isEmpty()){
-                    throw new IllegalArgumentException("User with ID " + profileDetails.getUsers().getId()+ " does not exists");
-                }
-            }
-            existingProfile.setFullName(profileDetails.getFullName());
-            existingProfile.setBio(profileDetails.getBio());
-            existingProfile.setProfilePictureUrl(profileDetails.getProfilePictureUrl());
-            existingProfile.setSocialLinks(profileDetails.getSocialLinks());
-            existingProfile.setUpdatedAt(Instant.now());
-            return userProfileRepository.save(existingProfile);
-
-        } else {
-            return null; // Or throw an exception
+        // Update fields (check for nulls to allow partial updates)
+        if (requestDto.fullName() != null) {
+            existingProfile.setFullName(requestDto.fullName());
         }
+        if (requestDto.bio() != null) {
+            existingProfile.setBio(requestDto.bio());
+        }
+        if (requestDto.profilePictureUrl() != null) {
+            existingProfile.setProfilePictureUrl(requestDto.profilePictureUrl());
+        }
+        if (requestDto.socialLinks() != null) {
+            existingProfile.setSocialLinks(requestDto.socialLinks());
+        }
+
+        return userProfileRepository.save(existingProfile);
     }
 
     @Transactional
     public void deleteUserProfile(Integer id) {
-        if(userProfileRepository.existsById(id)) {
-            userProfileRepository.deleteById(id);
-        }
-        else{
-            throw new IllegalArgumentException("User profile with ID " + id + " does not exists");
-        }
+        UserProfile userProfile = userProfileRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User profile not found with id: " + id));
+        userProfileRepository.delete(userProfile);
+    }
+
+    // Helper method to convert to DTO
+    private UserProfileDto.Response convertToDto(UserProfile userProfile) {
+        UserDto.Response userDto = new UserDto.Response(
+                userProfile.getUsers().getId(),
+                userProfile.getUsers().getUsername(),
+                userProfile.getUsers().getEmail(),
+                userProfile.getUsers().getRole(),
+                userProfile.getUsers().getCreatedAt(),
+                userProfile.getUsers().getUpdatedAt()
+        );
+
+        return new UserProfileDto.Response(
+                userProfile.getId(), // This is the user ID
+                userDto,
+                userProfile.getFullName(),
+                userProfile.getBio(),
+                userProfile.getProfilePictureUrl(),
+                userProfile.getSocialLinks(),
+                userProfile.getCreatedAt(),
+                userProfile.getUpdatedAt()
+        );
     }
 }

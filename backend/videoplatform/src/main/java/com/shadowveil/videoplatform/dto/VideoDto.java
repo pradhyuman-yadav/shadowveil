@@ -36,11 +36,11 @@ public class VideoDto {
 
     public record Response(
             Integer id,
-            UserDto.Response user,
+            UserDto.Response user,  // Use nested DTO
             String title,
             String description,
             String url,
-            String thumbnailUrl,
+            String thumbnailUrl, // Correct field name
             Integer duration,
             String status,
             Long views,
@@ -48,6 +48,7 @@ public class VideoDto {
             Long dislikes,
             Instant createdAt,
             Instant updatedAt,
-            ModuleDto.Response module
+            ModuleDto.Response module // Use nested DTO
+
     ) {}
 }

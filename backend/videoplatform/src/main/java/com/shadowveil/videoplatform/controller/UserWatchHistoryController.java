@@ -1,15 +1,21 @@
-// File: src/main/java/com/shadowveil/videoplatform/controller/UserWatchHistoryController.java
 package com.shadowveil.videoplatform.controller;
 
+import com.shadowveil.videoplatform.dto.UserDto;
+import com.shadowveil.videoplatform.dto.UserWatchHistoryDto;
+import com.shadowveil.videoplatform.dto.VideoDto;
+import com.shadowveil.videoplatform.dto.ModuleDto; // Import ModuleDto
 import com.shadowveil.videoplatform.entity.UserWatchHistory;
 import com.shadowveil.videoplatform.service.UserWatchHistoryService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/watch-history") // Good, descriptive path
@@ -23,62 +29,128 @@ public class UserWatchHistoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserWatchHistory>> getAllWatchHistory() {
-        return new ResponseEntity<>(userWatchHistoryService.getAllWatchHistory(), HttpStatus.OK);
+    public ResponseEntity<List<UserWatchHistoryDto.Response>> getAllWatchHistory() {
+        List<UserWatchHistory> historyEntries = userWatchHistoryService.getAllWatchHistory();
+        List<UserWatchHistoryDto.Response> responseDtos = historyEntries.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserWatchHistory> getWatchHistoryById(@PathVariable Integer id) {
-        Optional<UserWatchHistory> historyEntry = userWatchHistoryService.getWatchHistoryById(id);
-        return historyEntry.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<UserWatchHistoryDto.Response> getWatchHistoryById(@PathVariable Integer id) {
+        UserWatchHistory historyEntry = userWatchHistoryService.getWatchHistoryById(id);
+        return ResponseEntity.ok(convertToDto(historyEntry));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<UserWatchHistory>> getWatchHistoryByUserId(@PathVariable Integer userId) {
-        return new ResponseEntity<>(userWatchHistoryService.getWatchHistoryByUserId(userId), HttpStatus.OK);
+    public ResponseEntity<List<UserWatchHistoryDto.Response>> getWatchHistoryByUserId(@PathVariable Integer userId) {
+        List<UserWatchHistory> historyEntries = userWatchHistoryService.getWatchHistoryByUserId(userId);
+        List<UserWatchHistoryDto.Response> responseDtos = historyEntries.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
     @GetMapping("/video/{videoId}")
-    public ResponseEntity<List<UserWatchHistory>> getWatchHistoryByVideoId(@PathVariable Integer videoId) {
-        return new ResponseEntity<>(userWatchHistoryService.getWatchHistoryByVideoId(videoId), HttpStatus.OK);
+    public ResponseEntity<List<UserWatchHistoryDto.Response>> getWatchHistoryByVideoId(@PathVariable Integer videoId) {
+        List<UserWatchHistory> historyEntries = userWatchHistoryService.getWatchHistoryByVideoId(videoId);
+        List<UserWatchHistoryDto.Response> responseDtos = historyEntries.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
     @GetMapping("/user/{userId}/video/{videoId}")
-    public ResponseEntity<List<UserWatchHistory>> getWatchHistoryByUserAndVideo(
+    public ResponseEntity<List<UserWatchHistoryDto.Response>> getWatchHistoryByUserAndVideo(
             @PathVariable Integer userId,
             @PathVariable Integer videoId) {
-        return new ResponseEntity<>(userWatchHistoryService.getWatchHistoryByUserIdAndVideoId(userId, videoId), HttpStatus.OK);
+        List<UserWatchHistory> historyEntries = userWatchHistoryService.getWatchHistoryByUserIdAndVideoId(userId, videoId);
+        List<UserWatchHistoryDto.Response> responseDtos = historyEntries.stream().map(this::convertToDto).collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
     @PostMapping
-    public ResponseEntity<UserWatchHistory> createWatchHistoryEntry(@RequestBody UserWatchHistory historyEntry) {
-        try {
-            UserWatchHistory savedEntry = userWatchHistoryService.createWatchHistoryEntry(historyEntry);
-            return new ResponseEntity<>(savedEntry, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 for invalid user/video
-        }
+    public ResponseEntity<UserWatchHistoryDto.Response> createWatchHistoryEntry(@Valid @RequestBody UserWatchHistoryDto.Request requestDto) {
+        UserWatchHistory savedEntry = userWatchHistoryService.createWatchHistoryEntry(requestDto);
+        return new ResponseEntity<>(convertToDto(savedEntry), HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UserWatchHistory> updateWatchHistoryEntry(@PathVariable Integer id, @RequestBody UserWatchHistory historyDetails) {
-        try {
-            UserWatchHistory updatedEntry = userWatchHistoryService.updateWatchHistoryEntry(id, historyDetails);
-            return updatedEntry!=null ? new ResponseEntity<>(updatedEntry, HttpStatus.OK) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    @PutMapping("/{id}")  // Correct endpoint
+    public ResponseEntity<UserWatchHistoryDto.Response> updateWatchHistoryEntry(
+            @PathVariable Integer id,
+            @Valid @RequestBody UserWatchHistoryDto.UpdateRequest requestDto) { // Use UpdateRequest DTO
+        UserWatchHistory updatedEntry = userWatchHistoryService.updateWatchHistoryEntry(id, requestDto);
+        return ResponseEntity.ok(convertToDto(updatedEntry));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWatchHistoryEntry(@PathVariable Integer id) {
-        try{
-            userWatchHistoryService.deleteWatchHistoryEntry(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        catch (IllegalArgumentException e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        userWatchHistoryService.deleteWatchHistoryEntry(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private UserWatchHistoryDto.Response convertToDto(UserWatchHistory historyEntry) {
+        // Create nested DTOs
+        UserDto.Response userDto = new UserDto.Response(
+                historyEntry.getUser().getId(),
+                historyEntry.getUser().getUsername(),
+                historyEntry.getUser().getEmail(),
+                historyEntry.getUser().getRole(),
+                historyEntry.getUser().getCreatedAt(),
+                historyEntry.getUser().getUpdatedAt()
+        );
+
+        VideoDto.Response videoDto = new VideoDto.Response(
+                historyEntry.getVideo().getId(),
+                (historyEntry.getVideo().getUser() != null) ? new UserDto.Response(
+                        historyEntry.getVideo().getUser().getId(),
+                        historyEntry.getVideo().getUser().getUsername(),
+                        historyEntry.getVideo().getUser().getEmail(),
+                        historyEntry.getVideo().getUser().getRole(),
+                        historyEntry.getVideo().getUser().getCreatedAt(),
+                        historyEntry.getVideo().getUser().getUpdatedAt()
+                ) : null,
+                historyEntry.getVideo().getTitle(),
+                historyEntry.getVideo().getDescription(),
+                historyEntry.getVideo().getUrl(),
+                historyEntry.getVideo().getThumbnailUrl(),
+                historyEntry.getVideo().getDuration(),
+                historyEntry.getVideo().getStatus(),
+                historyEntry.getVideo().getViews(),
+                historyEntry.getVideo().getLikes(),
+                historyEntry.getVideo().getDislikes(),
+                historyEntry.getVideo().getCreatedAt(),
+                historyEntry.getVideo().getUpdatedAt(),
+                (historyEntry.getVideo().getModule() != null) ? new ModuleDto.Response( // Handle null module
+                        historyEntry.getVideo().getModule().getId(),
+                        null, // No CourseDto needed
+                        historyEntry.getVideo().getModule().getTitle(),
+                        historyEntry.getVideo().getModule().getDescription(),
+                        historyEntry.getVideo().getModule().getPosition(),
+                        historyEntry.getVideo().getModule().getCreatedAt(),
+                        historyEntry.getVideo().getModule().getUpdatedAt()
+                ) : null
+        );
+
+        return new UserWatchHistoryDto.Response(
+                historyEntry.getId(),
+                userDto,
+                videoDto,
+                historyEntry.getWatchedAt(),
+                historyEntry.getDurationWatched()
+        );
+    }
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public  ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
     }
 }

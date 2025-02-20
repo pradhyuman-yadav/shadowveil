@@ -2,14 +2,17 @@ package com.shadowveil.videoplatform.controller;
 
 import com.shadowveil.videoplatform.dto.UserDto;
 import com.shadowveil.videoplatform.entity.User;
+import com.shadowveil.videoplatform.exception.BadRequestException;
+import com.shadowveil.videoplatform.exception.ResourceNotFoundException;
 import com.shadowveil.videoplatform.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -17,6 +20,7 @@ public class UserController {
 
     private final UserService userService;
 
+    @Autowired // Use constructor injection
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -29,22 +33,20 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto.Response> getUserById(@PathVariable Integer id) {
-        Optional<UserDto.Response> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        UserDto.Response user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<UserDto.Response> getUserByUsername(@PathVariable String username) {
-        return userService.getUserByUsername(username)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        UserDto.Response user = userService.getUserByUsername(username);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/email/{email}")
     public ResponseEntity<UserDto.Response> getUserByEmail(@PathVariable String email) {
-        return userService.getUserByEmail(email)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        UserDto.Response user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping
@@ -65,5 +67,19 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<String> handleBadRequestException(BadRequestException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 }

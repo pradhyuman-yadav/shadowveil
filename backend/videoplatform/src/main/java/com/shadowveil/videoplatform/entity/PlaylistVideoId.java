@@ -1,3 +1,4 @@
+// src/main/java/com/shadowveil/videoplatform/entity/PlaylistVideoId.java
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.Column;
@@ -6,13 +7,18 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.Hibernate;
+import lombok.NoArgsConstructor; // Add this
+import lombok.AllArgsConstructor; // Add this
 
 import java.util.Objects;
+import java.io.Serializable; // Correct import
 
 @Getter
 @Setter
 @Embeddable
-public class PlaylistVideoId implements java.io.Serializable {
+@NoArgsConstructor // Add this
+@AllArgsConstructor // Add this
+public class PlaylistVideoId implements Serializable { // Correct interface
     private static final long serialVersionUID = 6488075875444444157L;
     @NotNull
     @Column(name = "playlist_id", nullable = false)

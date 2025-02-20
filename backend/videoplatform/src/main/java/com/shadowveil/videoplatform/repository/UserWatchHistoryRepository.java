@@ -1,4 +1,4 @@
-// File: src/main/java/com/shadowveil/videoplatform/repository/UserWatchHistoryRepository.java
+// (No changes needed, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.UserWatchHistory;

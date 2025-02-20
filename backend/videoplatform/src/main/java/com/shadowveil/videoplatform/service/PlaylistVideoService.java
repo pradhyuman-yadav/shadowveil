@@ -1,58 +1,77 @@
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.PlaylistVideoDto;
+import com.shadowveil.videoplatform.entity.Playlist;
 import com.shadowveil.videoplatform.entity.PlaylistVideo;
 import com.shadowveil.videoplatform.entity.PlaylistVideoId;
+import com.shadowveil.videoplatform.entity.Video;
+import com.shadowveil.videoplatform.repository.PlaylistRepository;
 import com.shadowveil.videoplatform.repository.PlaylistVideoRepository;
+import com.shadowveil.videoplatform.repository.VideoRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PlaylistVideoService {
 
     private final PlaylistVideoRepository playlistVideoRepository;
+    private final PlaylistRepository playlistRepository; // Inject
+    private final VideoRepository videoRepository; // Inject
 
-    public PlaylistVideoService(PlaylistVideoRepository playlistVideoRepository) {
+    @Autowired
+    public PlaylistVideoService(PlaylistVideoRepository playlistVideoRepository,
+                                PlaylistRepository playlistRepository, VideoRepository videoRepository) {
         this.playlistVideoRepository = playlistVideoRepository;
+        this.playlistRepository = playlistRepository;
+        this.videoRepository = videoRepository;
     }
 
-    // Retrieve all PlaylistVideo records.
     public List<PlaylistVideo> getAllPlaylistVideos() {
         return playlistVideoRepository.findAll();
     }
 
-    // Retrieve a single PlaylistVideo record by its composite ID.
-    public Optional<PlaylistVideo> getPlaylistVideoById(PlaylistVideoId id) {
-        return playlistVideoRepository.findById(id);
+    public PlaylistVideo getPlaylistVideoById(PlaylistVideoId id) {
+        return playlistVideoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("PlaylistVideo not found with id: " + id));
     }
+    @Transactional
+    public PlaylistVideo createPlaylistVideo(PlaylistVideoDto.Request requestDto) {
 
-    // Create a new PlaylistVideo record.
-    public PlaylistVideo createPlaylistVideo(PlaylistVideo playlistVideo) {
+        Playlist playlist = playlistRepository.findById(requestDto.playlistId())
+                .orElseThrow(() -> new EntityNotFoundException("Playlist not found with id: " + requestDto.playlistId()));
+        Video video = videoRepository.findById(requestDto.videoId())
+                .orElseThrow(()-> new EntityNotFoundException("Video not found with id: " + requestDto.videoId()));
+
+        PlaylistVideoId id = new PlaylistVideoId(requestDto.playlistId(), requestDto.videoId());
+        PlaylistVideo playlistVideo = new PlaylistVideo(id, playlist, video, requestDto.position(), null); // createdAt by DB
         return playlistVideoRepository.save(playlistVideo);
     }
 
-    // Update an existing PlaylistVideo record.
-    public PlaylistVideo updatePlaylistVideo(PlaylistVideoId id, PlaylistVideo playlistVideoDetails) {
-        return playlistVideoRepository.findById(id).map(playlistVideo -> {
-            // Update fields that are not part of the composite key.
-            playlistVideo.setPosition(playlistVideoDetails.getPosition());
-            // Optionally update other non-key fields (e.g., createdAt if needed)
-            return playlistVideoRepository.save(playlistVideo);
-        }).orElseThrow(() -> new RuntimeException("PlaylistVideo not found with id: " + id));
+    @Transactional
+    public PlaylistVideo updatePlaylistVideo(PlaylistVideoId id, PlaylistVideoDto.UpdatePositionRequest requestDto) {
+        PlaylistVideo playlistVideo = playlistVideoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("PlaylistVideo not found with id: " + id));
+
+        // Only update the position
+        playlistVideo.setPosition(requestDto.position());
+        return playlistVideoRepository.save(playlistVideo);
     }
 
-    // Delete a PlaylistVideo record by its composite ID.
+    @Transactional
     public void deletePlaylistVideo(PlaylistVideoId id) {
-        playlistVideoRepository.deleteById(id);
+        PlaylistVideo playlistVideo = playlistVideoRepository.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Playlist Video not found with id: "+ id));
+        playlistVideoRepository.delete(playlistVideo);
     }
 
-    // Retrieve all PlaylistVideo records for a specific playlist.
     public List<PlaylistVideo> getPlaylistVideosByPlaylistId(Integer playlistId) {
         return playlistVideoRepository.findByPlaylist_Id(playlistId);
     }
 
-    // Retrieve all PlaylistVideo records for a specific video.
     public List<PlaylistVideo> getPlaylistVideosByVideoId(Integer videoId) {
         return playlistVideoRepository.findByVideo_Id(videoId);
     }

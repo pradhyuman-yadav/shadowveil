@@ -1,15 +1,18 @@
-// File: src/main/java/com/shadowveil/videoplatform/controller/TagController.java
 package com.shadowveil.videoplatform.controller;
 
+import com.shadowveil.videoplatform.dto.TagDto;
 import com.shadowveil.videoplatform.entity.Tag;
 import com.shadowveil.videoplatform.service.TagService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tags")
@@ -23,58 +26,72 @@ public class TagController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Tag>> getAllTags() {
-        return new ResponseEntity<>(tagService.getAllTags(), HttpStatus.OK);
+    public ResponseEntity<List<TagDto.Response>> getAllTags() {
+        List<Tag> tags = tagService.getAllTags();
+        List<TagDto.Response> responseDtos = tags.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(responseDtos, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tag> getTagById(@PathVariable Integer id) {
-        Optional<Tag> tag = tagService.getTagById(id);
-        return tag.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<TagDto.Response> getTagById(@PathVariable Integer id) {
+        Tag tag = tagService.getTagById(id);
+        return new ResponseEntity<>(convertToDto(tag), HttpStatus.OK);
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<Tag> getTagByName(@PathVariable String name) {
-        Optional<Tag> tag = tagService.getTagByName(name);
-        return tag.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<TagDto.Response> getTagByName(@PathVariable String name) {
+        Tag tag = tagService.getTagByName(name);
+        return new ResponseEntity<>(convertToDto(tag), HttpStatus.OK);
     }
+
     @GetMapping("/search")
-    public ResponseEntity<List<Tag>> searchTags(@RequestParam String name) {
+    public ResponseEntity<List<TagDto.Response>> searchTags(@RequestParam String name) {
         List<Tag> tags = tagService.searchTagsByName(name);
-        return new ResponseEntity<>(tags, HttpStatus.OK);
+        List<TagDto.Response> responseDtos = tags.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(responseDtos, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<Tag> createTag(@RequestBody Tag tag) {
-        try {
-            Tag savedTag = tagService.createTag(tag);
-            return new ResponseEntity<>(savedTag, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT); // 409 Conflict for duplicate tag names
-        }
+    public ResponseEntity<TagDto.Response> createTag(@Valid @RequestBody TagDto.Request requestDto) {
+        Tag savedTag = tagService.createTag(requestDto);
+        return new ResponseEntity<>(convertToDto(savedTag), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Tag> updateTag(@PathVariable Integer id, @RequestBody Tag tagDetails) {
-        try {
-            Tag updatedTag = tagService.updateTag(id, tagDetails);
-            return updatedTag != null ? new ResponseEntity<>(updatedTag, HttpStatus.OK)
-                    : new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT); // 409 Conflict for duplicate tag names
-        }
+    public ResponseEntity<TagDto.Response> updateTag(
+            @PathVariable Integer id,
+            @Valid @RequestBody TagDto.UpdateRequest requestDto) { // Use UpdateRequest DTO
+        Tag updatedTag = tagService.updateTag(id, requestDto);
+        return new ResponseEntity<>(convertToDto(updatedTag), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTag(@PathVariable Integer id) {
-        try{
-            tagService.deleteTag(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        catch (IllegalArgumentException e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        tagService.deleteTag(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+    private TagDto.Response convertToDto(Tag tag){
+        return new TagDto.Response(
+                tag.getId(),
+                tag.getName(),
+                tag.getCreatedAt(),
+                tag.getUpdatedAt()
+        );
+    }
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT); // 409 Conflict
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public  ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

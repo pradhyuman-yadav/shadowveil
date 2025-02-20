@@ -1,4 +1,4 @@
-// File: src/main/java/com/shadowveil/videoplatform/repository/UserProfileRepository.java
+//(No Change needed, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.UserProfile;
@@ -9,6 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfile, Integer> {
-    // Find a user profile by user ID
     Optional<UserProfile> findByUsersId(Integer userId);
 }

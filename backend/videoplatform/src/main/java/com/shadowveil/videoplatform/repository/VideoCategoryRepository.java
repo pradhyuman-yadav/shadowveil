@@ -1,3 +1,4 @@
+//(No changes needed, well-defined)
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.VideoCategory;
@@ -9,10 +10,6 @@ import java.util.List;
 
 @Repository
 public interface VideoCategoryRepository extends JpaRepository<VideoCategory, VideoCategoryId> {
-
-    // Retrieve all VideoCategory records for a specific video.
     List<VideoCategory> findByVideo_Id(Integer videoId);
-
-    // Retrieve all VideoCategory records for a specific category.
     List<VideoCategory> findByCategory_Id(Integer categoryId);
 }

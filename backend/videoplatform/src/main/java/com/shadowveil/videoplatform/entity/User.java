@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -20,6 +22,8 @@ import java.util.Set;
         @UniqueConstraint(name = "users_email_key", columnNames = {"email"}),
         @UniqueConstraint(name = "users_username_key", columnNames = {"username"})
 })
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,13 +32,13 @@ public class User {
 
     @Size(max = 50, message = "Username must be less than 50 characters")
     @NotBlank(message = "Username cannot be blank")
-    @Column(name = "username", nullable = false, length = 50, unique = true)
+    @Column(name = "username", nullable = false, length = 50, unique = true) // Add unique here
     private String username;
 
     @Size(max = 100, message = "Email must be less than 100 characters")
     @NotBlank(message = "Email cannot be blank")
     @Email(message = "Invalid email format")
-    @Column(name = "email", nullable = false, length = 100, unique = true)
+    @Column(name = "email", nullable = false, length = 100, unique = true) // Add unique here
     private String email;
 
     @Size(max = 255)
@@ -44,8 +48,8 @@ public class User {
 
     @NotBlank(message = "Role cannot be blank")
     @Size(max = 20, message="Role can be upto 20 characters")
-    @Column(name = "role", nullable = false, length = 20)
-    private String role;
+    @Column(name = "role", nullable = false, length = 20)  // Consider an Enum for roles
+    private String role; //  Consider using an Enum for roles
 
     @CreationTimestamp
     @Column(name = "created_at")

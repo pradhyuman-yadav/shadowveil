@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -14,9 +16,11 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "user_watch_history", schema = "public")
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class UserWatchHistory {
     @Id
-    @ColumnDefault("nextval('user_watch_history_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Correct
     @Column(name = "id", nullable = false)
     private Integer id;
 

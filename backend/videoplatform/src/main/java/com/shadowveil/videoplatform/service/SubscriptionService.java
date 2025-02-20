@@ -1,9 +1,16 @@
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.SubscriptionDto;
 import com.shadowveil.videoplatform.entity.Subscription;
+import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.repository.SubscriptionRepository;
+import com.shadowveil.videoplatform.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,44 +18,69 @@ import java.util.Optional;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository; // Inject UserRepository
 
-    public SubscriptionService(SubscriptionRepository subscriptionRepository) {
+    @Autowired
+    public SubscriptionService(SubscriptionRepository subscriptionRepository, UserRepository userRepository) {
         this.subscriptionRepository = subscriptionRepository;
+        this.userRepository = userRepository;
     }
 
-    // Retrieve all subscriptions.
     public List<Subscription> getAllSubscriptions() {
         return subscriptionRepository.findAll();
     }
 
-    // Retrieve a single subscription by its ID.
-    public Optional<Subscription> getSubscriptionById(Integer id) {
-        return subscriptionRepository.findById(id);
+    public Subscription getSubscriptionById(Integer id) {
+        return subscriptionRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Subscription not found with ID: "+ id));
     }
 
-    // Create a new subscription.
-    public Subscription createSubscription(Subscription subscription) {
+    @Transactional
+    public Subscription createSubscription(SubscriptionDto.Request requestDto) {
+        Subscription subscription = new Subscription();
+
+        // Handle optional user association
+        if (requestDto.userId() != null) {
+            User user = userRepository.findById(requestDto.userId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + requestDto.userId()));
+            subscription.setUser(user);
+        }
+
+        subscription.setPlan(requestDto.plan());
+        subscription.setStartDate(requestDto.startDate());
+        // Calculate endDate, if needed (e.g., one month from startDate)
+        // Example: subscription.setEndDate(requestDto.startDate().plus(1, ChronoUnit.MONTHS));
+        subscription.setStatus("active"); // Set initial status
+
         return subscriptionRepository.save(subscription);
     }
 
-    // Update an existing subscription.
-    public Subscription updateSubscription(Integer id, Subscription subscriptionDetails) {
-        return subscriptionRepository.findById(id).map(subscription -> {
-            subscription.setUser(subscriptionDetails.getUser());
-            subscription.setPlan(subscriptionDetails.getPlan());
-            subscription.setStartDate(subscriptionDetails.getStartDate());
-            subscription.setEndDate(subscriptionDetails.getEndDate());
-            subscription.setStatus(subscriptionDetails.getStatus());
-            return subscriptionRepository.save(subscription);
-        }).orElseThrow(() -> new RuntimeException("Subscription not found with id " + id));
+    @Transactional
+    public Subscription updateSubscription(Integer id, SubscriptionDto.UpdateRequest updateRequestDto) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Subscription not found with id: " + id));
+
+        // Update fields.  Only update what's provided in the DTO.
+        subscription.setPlan(updateRequestDto.plan());
+        subscription.setStartDate(updateRequestDto.startDate());
+
+        // Handle optional endDate update
+        if (updateRequestDto.endDate() != null) {
+            subscription.setEndDate(updateRequestDto.endDate());
+        }
+
+        subscription.setStatus(updateRequestDto.status());
+
+
+        return subscriptionRepository.save(subscription);
     }
 
-    // Delete a subscription by its ID.
+    @Transactional // Added Transactional
     public void deleteSubscription(Integer id) {
-        subscriptionRepository.deleteById(id);
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Subscription not found with id: " + id));
+        subscriptionRepository.delete(subscription);
     }
 
-    // Retrieve subscriptions by a given user ID.
     public List<Subscription> getSubscriptionsByUserId(Integer userId) {
         return subscriptionRepository.findByUser_Id(userId);
     }

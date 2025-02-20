@@ -1,12 +1,18 @@
 package com.shadowveil.videoplatform.controller;
 
+import com.shadowveil.videoplatform.dto.SubscriptionDto;
+import com.shadowveil.videoplatform.dto.UserDto;
 import com.shadowveil.videoplatform.entity.Subscription;
 import com.shadowveil.videoplatform.service.SubscriptionService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -14,56 +20,72 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
 
+    @Autowired
     public SubscriptionController(SubscriptionService subscriptionService) {
         this.subscriptionService = subscriptionService;
     }
 
-    // GET /api/subscriptions
     @GetMapping
-    public ResponseEntity<List<Subscription>> getAllSubscriptions() {
+    public ResponseEntity<List<SubscriptionDto.Response>> getAllSubscriptions() {
         List<Subscription> subscriptions = subscriptionService.getAllSubscriptions();
-        return ResponseEntity.ok(subscriptions);
+        List<SubscriptionDto.Response> responseDtos = subscriptions.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
-    // GET /api/subscriptions/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Subscription> getSubscriptionById(@PathVariable Integer id) {
-        return subscriptionService.getSubscriptionById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<SubscriptionDto.Response> getSubscriptionById(@PathVariable Integer id) {
+        Subscription subscription = subscriptionService.getSubscriptionById(id);
+        return ResponseEntity.ok(convertToDto(subscription));
     }
 
-    // POST /api/subscriptions
     @PostMapping
-    public ResponseEntity<Subscription> createSubscription(@Valid @RequestBody Subscription subscription) {
-        Subscription createdSubscription = subscriptionService.createSubscription(subscription);
-        return ResponseEntity.ok(createdSubscription);
+    public ResponseEntity<SubscriptionDto.Response> createSubscription(@Valid @RequestBody SubscriptionDto.Request requestDto) {
+        Subscription createdSubscription = subscriptionService.createSubscription(requestDto);
+        return new ResponseEntity<>(convertToDto(createdSubscription), HttpStatus.CREATED);
     }
 
     // PUT /api/subscriptions/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Subscription> updateSubscription(
+    public ResponseEntity<SubscriptionDto.Response> updateSubscription(
             @PathVariable Integer id,
-            @Valid @RequestBody Subscription subscription) {
-        try {
-            Subscription updatedSubscription = subscriptionService.updateSubscription(id, subscription);
-            return ResponseEntity.ok(updatedSubscription);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.notFound().build();
-        }
+            @Valid @RequestBody SubscriptionDto.UpdateRequest updateRequestDto) { // Use UpdateRequest DTO
+        Subscription updatedSubscription = subscriptionService.updateSubscription(id, updateRequestDto);
+        return ResponseEntity.ok(convertToDto(updatedSubscription));
     }
 
-    // DELETE /api/subscriptions/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSubscription(@PathVariable Integer id) {
         subscriptionService.deleteSubscription(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/subscriptions/user/{userId}
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Subscription>> getSubscriptionsByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<List<SubscriptionDto.Response>> getSubscriptionsByUserId(@PathVariable Integer userId) {
         List<Subscription> subscriptions = subscriptionService.getSubscriptionsByUserId(userId);
-        return ResponseEntity.ok(subscriptions);
+        List<SubscriptionDto.Response> responseDtos = subscriptions.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
+    }
+    // Helper method to convert Subscription entity to SubscriptionDto.Response
+    private SubscriptionDto.Response convertToDto(Subscription subscription) {
+        UserDto.Response userDto = (subscription.getUser() != null) ?
+                new UserDto.Response(subscription.getUser().getId(), subscription.getUser().getUsername(), subscription.getUser().getEmail(), subscription.getUser().getRole(), subscription.getUser().getCreatedAt(), subscription.getUser().getUpdatedAt()) :
+                null; // Handle potentially null user
+
+        return new SubscriptionDto.Response(
+                subscription.getId(),
+                userDto,
+                subscription.getPlan(),
+                subscription.getStartDate(),
+                subscription.getEndDate(), // Correct getter
+                subscription.getStatus()
+        );
+    }
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 }

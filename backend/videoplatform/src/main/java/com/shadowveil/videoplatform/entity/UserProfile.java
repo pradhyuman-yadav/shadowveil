@@ -1,13 +1,17 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Add
+import lombok.AllArgsConstructor; // Add
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
@@ -17,6 +21,8 @@ import java.util.Map;
 @Setter
 @Entity
 @Table(name = "user_profiles", schema = "public")
+@NoArgsConstructor // Add
+@AllArgsConstructor // Add
 public class UserProfile {
     @Id
     @Column(name = "user_id", nullable = false)
@@ -32,7 +38,7 @@ public class UserProfile {
     @Column(name = "full_name", length = 100)
     private String fullName;
 
-    @Column(name = "bio", length = Integer.MAX_VALUE)
+    @Column(name = "bio") // No need for length
     private String bio;
 
     @Size(max = 512)
@@ -47,8 +53,8 @@ public class UserProfile {
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
+    @UpdateTimestamp // Use Hibernate annotation
     private Instant updatedAt;
 
 }

@@ -1,17 +1,17 @@
-// File: src/main/java/com/shadowveil/videoplatform/service/VideoTranscriptService.java
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.VideoTranscriptDto;
 import com.shadowveil.videoplatform.entity.Video;
 import com.shadowveil.videoplatform.entity.VideoTranscript;
 import com.shadowveil.videoplatform.repository.VideoRepository;
+import com.shadowveil.videoplatform.repository.VideoSubtitleRepository;
 import com.shadowveil.videoplatform.repository.VideoTranscriptRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class VideoTranscriptService {
@@ -29,62 +29,49 @@ public class VideoTranscriptService {
         return videoTranscriptRepository.findAll();
     }
 
-    public Optional<VideoTranscript> getTranscriptById(Integer id) {
-        return videoTranscriptRepository.findById(id);
+    public VideoTranscript getTranscriptById(Integer id) {
+        return videoTranscriptRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Video transcript not found with ID: " + id));
     }
 
     public List<VideoTranscript> getTranscriptsByVideoId(Integer videoId) {
         return videoTranscriptRepository.findByVideoId(videoId);
     }
-    public List<VideoTranscript> getTranscriptsByVideoIdAndLanguage(Integer videoId, String language){
+
+    public List<VideoTranscript> getTranscriptsByVideoIdAndLanguage(Integer videoId, String language) {
         return videoTranscriptRepository.findByVideoIdAndLanguage(videoId, language);
     }
 
-    @Transactional
-    public VideoTranscript createTranscript(VideoTranscript transcript) {
-        // Validate that the video exists
-        Optional<Video> video = videoRepository.findById(transcript.getVideo().getId());
-        if (video.isEmpty()) {
-            throw new IllegalArgumentException("Video with ID " + transcript.getVideo().getId() + " not found.");
-        }
 
-        transcript.setVideo(video.get());
-        transcript.setUpdatedAt(Instant.now());
+    @Transactional
+    public VideoTranscript createTranscript(VideoTranscriptDto.Request requestDto) {
+        // Validate that the video exists
+        Video video = videoRepository.findById(requestDto.videoId())
+                .orElseThrow(() -> new EntityNotFoundException("Video with ID " + requestDto.videoId() + " not found."));
+
+        VideoTranscript transcript = new VideoTranscript();
+        transcript.setVideo(video);
+        transcript.setLanguage(requestDto.language());
+        transcript.setTranscript(requestDto.transcript());
+
         return videoTranscriptRepository.save(transcript);
     }
 
     @Transactional
-    public VideoTranscript updateTranscript(Integer id, VideoTranscript transcriptDetails) {
-        Optional<VideoTranscript> optionalTranscript = videoTranscriptRepository.findById(id);
-        if (optionalTranscript.isPresent()) {
-            VideoTranscript existingTranscript = optionalTranscript.get();
-            // Validate video if video is being changed
-            if(transcriptDetails.getVideo() != null && !transcriptDetails.getVideo().getId().equals(existingTranscript.getVideo().getId())){
-                Optional<Video> video = videoRepository.findById(transcriptDetails.getVideo().getId());
-                if(video.isEmpty()){
-                    throw new IllegalArgumentException("Video with ID " + transcriptDetails.getVideo().getId()+ " does not exists");
-                }
-                existingTranscript.setVideo(video.get());
-            }
+    public VideoTranscript updateTranscript(Integer id, VideoTranscriptDto.UpdateRequest requestDto) {
+        VideoTranscript existingTranscript = videoTranscriptRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Transcript not found with id: " + id));
 
-            existingTranscript.setLanguage(transcriptDetails.getLanguage());
-            existingTranscript.setTranscript(transcriptDetails.getTranscript());
-            existingTranscript.setUpdatedAt(Instant.now()); // Update the timestamp
-            return videoTranscriptRepository.save(existingTranscript);
+        // Update fields
+        existingTranscript.setLanguage(requestDto.language());
+        existingTranscript.setTranscript(requestDto.transcript());
 
-        } else {
-            return null; // Or throw an exception
-        }
+        return videoTranscriptRepository.save(existingTranscript);
     }
 
     @Transactional
     public void deleteTranscript(Integer id) {
-        if(videoTranscriptRepository.existsById(id)){
-            videoTranscriptRepository.deleteById(id);
-        }
-        else{
-            throw new IllegalArgumentException("Video Transcript with ID " + id+ " does not exists");
-        }
-
+        VideoTranscript videoTranscript = videoTranscriptRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Video transcript not found with id: " + id));
+        videoTranscriptRepository.delete(videoTranscript);
     }
 }

@@ -1,17 +1,18 @@
-// File: src/main/java/com/shadowveil/videoplatform/service/VideoReviewService.java
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.VideoReviewDto;
 import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.entity.Video;
 import com.shadowveil.videoplatform.entity.VideoReview;
 import com.shadowveil.videoplatform.repository.VideoReviewRepository;
 import com.shadowveil.videoplatform.repository.UserRepository;
 import com.shadowveil.videoplatform.repository.VideoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,8 +37,8 @@ public class VideoReviewService {
         return videoReviewRepository.findAll();
     }
 
-    public Optional<VideoReview> getReviewById(Integer id) {
-        return videoReviewRepository.findById(id);
+    public VideoReview getReviewById(Integer id) {
+        return videoReviewRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Video review not found with ID: "+ id));
     }
 
     public List<VideoReview> getReviewsByVideoId(Integer videoId) {
@@ -52,77 +53,45 @@ public class VideoReviewService {
     }
 
     @Transactional
-    public VideoReview createReview(VideoReview review) {
+    public VideoReview createReview(VideoReviewDto.Request requestDto) {
         // Validate user and video
-        Optional<User> user = userRepository.findById(review.getUser().getId());
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException("User with ID " + review.getUser().getId() + " not found.");
-        }
-        Optional<Video> video = videoRepository.findById(review.getVideo().getId());
-        if (video.isEmpty()) {
-            throw new IllegalArgumentException("Video with ID " + review.getVideo().getId() + " not found.");
-        }
+        User user = userRepository.findById(requestDto.userId())
+                .orElseThrow(() -> new EntityNotFoundException("User with ID " + requestDto.userId() + " not found."));
+        Video video = videoRepository.findById(requestDto.videoId())
+                .orElseThrow(() -> new EntityNotFoundException("Video with ID " + requestDto.videoId() + " not found."));
 
         // Prevent duplicate reviews
-        Optional<VideoReview> existingReview = videoReviewRepository.findOneByVideoIdAndUserId(
-                review.getVideo().getId(), review.getUser().getId());
-        if (existingReview.isPresent()) {
-            throw new IllegalArgumentException("User has already reviewed this video.");
+        if (videoReviewRepository.findOneByVideoIdAndUserId(requestDto.videoId(), requestDto.userId()).isPresent()) {
+            throw new DataIntegrityViolationException("User has already reviewed this video.");
         }
 
-        review.setUser(user.get());
-        review.setVideo(video.get());
-        review.setUpdatedAt(Instant.now());
+        VideoReview review = new VideoReview();
+        review.setUser(user);
+        review.setVideo(video);
+        review.setRating(requestDto.rating());
+        review.setReviewText(requestDto.reviewText());
+
         return videoReviewRepository.save(review);
     }
 
     @Transactional
-    public VideoReview updateReview(Integer id, VideoReview reviewDetails) {
-        Optional<VideoReview> optionalReview = videoReviewRepository.findById(id);
-        if (optionalReview.isPresent()) {
-            VideoReview existingReview = optionalReview.get();
+    public VideoReview updateReview(Integer id, VideoReviewDto.UpdateRequest requestDto) {
+        VideoReview existingReview = videoReviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + id));
 
-            // Validate user and video if they are being changed
-            if(reviewDetails.getUser() != null && !reviewDetails.getUser().getId().equals(existingReview.getUser().getId())){
-                Optional<User> user = userRepository.findById(reviewDetails.getUser().getId());
-                if(user.isEmpty()){
-                    throw new IllegalArgumentException("User with ID " + reviewDetails.getUser().getId() + " does not exists");
-                }
-                // Check for duplicate on update
-                Optional<VideoReview> existingReviewForNewUser = videoReviewRepository.findOneByVideoIdAndUserId(existingReview.getVideo().getId(), reviewDetails.getUser().getId());
-                if(existingReviewForNewUser.isPresent()){
-                    throw new IllegalArgumentException("User has already reviewed this video.");
-                }
-                existingReview.setUser(user.get());
-            }
-            if(reviewDetails.getVideo() != null && !reviewDetails.getVideo().getId().equals(existingReview.getVideo().getId())){
-                Optional<Video> video = videoRepository.findById(reviewDetails.getVideo().getId());
-                if(video.isEmpty()){
-                    throw new IllegalArgumentException("Video with ID " + reviewDetails.getVideo().getId() + " does not exists");
-                }
-                // Check for duplicate on update
-                Optional<VideoReview> existingReviewForNewVideo = videoReviewRepository.findOneByVideoIdAndUserId(reviewDetails.getVideo().getId(), existingReview.getUser().getId());
-                if(existingReviewForNewVideo.isPresent()){
-                    throw  new IllegalArgumentException("User has already reviewed this video.");
-                }
-                existingReview.setVideo(video.get());
-            }
-            existingReview.setRating(reviewDetails.getRating());
-            existingReview.setReviewText(reviewDetails.getReviewText());
-            existingReview.setUpdatedAt(Instant.now()); // Update the timestamp
-            return videoReviewRepository.save(existingReview);
-        } else {
-            return null; // Or throw an exception
-        }
+        // Update fields
+        existingReview.setRating(requestDto.rating());
+        existingReview.setReviewText(requestDto.reviewText());
+        // updatedAt is handled automatically
+
+        return videoReviewRepository.save(existingReview);
+
     }
 
     @Transactional
     public void deleteReview(Integer id) {
-        if(videoReviewRepository.existsById(id)){
-            videoReviewRepository.deleteById(id);
-        }
-        else {
-            throw new IllegalArgumentException("Video review with ID " + id + " does not exists");
-        }
+        VideoReview videoReview = videoReviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Video review not found with id: " + id));
+        videoReviewRepository.delete(videoReview);
     }
 }

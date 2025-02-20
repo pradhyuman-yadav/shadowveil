@@ -1,16 +1,16 @@
-// File: src/main/java/com/shadowveil/videoplatform/service/VideoSubtitleService.java
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.VideoSubtitleDto;
 import com.shadowveil.videoplatform.entity.Video;
 import com.shadowveil.videoplatform.entity.VideoSubtitle;
 import com.shadowveil.videoplatform.repository.VideoRepository;
 import com.shadowveil.videoplatform.repository.VideoSubtitleRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class VideoSubtitleService {
@@ -28,8 +28,8 @@ public class VideoSubtitleService {
         return videoSubtitleRepository.findAll();
     }
 
-    public Optional<VideoSubtitle> getSubtitleById(Integer id) {
-        return videoSubtitleRepository.findById(id);
+    public VideoSubtitle getSubtitleById(Integer id) {
+        return videoSubtitleRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Video subtitle not found with ID: " + id));
     }
 
     public List<VideoSubtitle> getSubtitlesByVideoId(Integer videoId) {
@@ -42,49 +42,33 @@ public class VideoSubtitleService {
 
 
     @Transactional
-    public VideoSubtitle createSubtitle(VideoSubtitle subtitle) {
+    public VideoSubtitle createSubtitle(VideoSubtitleDto.Request requestDto) {
         // Validate that the video exists
-        Optional<Video> video = videoRepository.findById(subtitle.getVideo().getId());
-        if (video.isEmpty()) {
-            throw new IllegalArgumentException("Video with ID " + subtitle.getVideo().getId() + " not found.");
-        }
+        Video video = videoRepository.findById(requestDto.videoId())
+                .orElseThrow(() -> new EntityNotFoundException("Video with ID " + requestDto.videoId() + " not found."));
 
-        subtitle.setVideo(video.get());
-        // subtitle.setCreatedAt(Instant.now()); // Removed to use DB defaults
+        VideoSubtitle subtitle = new VideoSubtitle();
+        subtitle.setVideo(video);
+        subtitle.setLanguage(requestDto.language());
+        subtitle.setSubtitleUrl(requestDto.subtitleUrl());
         return videoSubtitleRepository.save(subtitle);
     }
 
     @Transactional
-    public VideoSubtitle updateSubtitle(Integer id, VideoSubtitle subtitleDetails) {
-        Optional<VideoSubtitle> optionalSubtitle = videoSubtitleRepository.findById(id);
-        if (optionalSubtitle.isPresent()) {
-            VideoSubtitle existingSubtitle = optionalSubtitle.get();
+    public VideoSubtitle updateSubtitle(Integer id, VideoSubtitleDto.UpdateRequest requestDto) {
+        VideoSubtitle existingSubtitle = videoSubtitleRepository.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Video Subtitle with id " + id+ " not found"));
 
-            // Validate video if it's being changed
-            if(subtitleDetails.getVideo() != null && !subtitleDetails.getVideo().getId().equals(existingSubtitle.getVideo().getId())){
-                Optional<Video> video = videoRepository.findById(subtitleDetails.getVideo().getId());
-                if(video.isEmpty()){
-                    throw new IllegalArgumentException("Video with ID " + subtitleDetails.getVideo().getId() + " does not exists");
-                }
-                existingSubtitle.setVideo(video.get());
-            }
-
-            existingSubtitle.setLanguage(subtitleDetails.getLanguage());
-            existingSubtitle.setSubtitleUrl(subtitleDetails.getSubtitleUrl());
-            // You typically wouldn't update createdAt
-            return videoSubtitleRepository.save(existingSubtitle);
-        } else {
-            return null; // Or throw an exception
-        }
+        // Update fields
+        existingSubtitle.setLanguage(requestDto.language());
+        existingSubtitle.setSubtitleUrl(requestDto.subtitleUrl());
+        return videoSubtitleRepository.save(existingSubtitle);
     }
 
     @Transactional
     public void deleteSubtitle(Integer id) {
-        if(videoSubtitleRepository.existsById(id)){
-            videoSubtitleRepository.deleteById(id);
-        }
-        else{
-            throw new IllegalArgumentException("Video Subtitle with ID " + id+ " does not exists");
-        }
+        VideoSubtitle videoSubtitle = videoSubtitleRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Video subtitle not found with id: " + id));
+        videoSubtitleRepository.delete(videoSubtitle);
     }
 }
