@@ -8,10 +8,6 @@ import java.util.List;
 
 @Repository
 public interface AnalyticRepository extends JpaRepository<Analytic, Integer> {
-
-    // Find all analytics records for a given video (using the video entity's id)
     List<Analytic> findByVideo_Id(Integer videoId);
-
-    // Find all analytics records for a given user (using the user entity's id)
     List<Analytic> findByUser_Id(Integer userId);
 }

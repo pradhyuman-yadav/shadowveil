@@ -1,11 +1,16 @@
 package com.shadowveil.videoplatform.controller;
 
+import com.shadowveil.videoplatform.dto.AnalyticDto;
 import com.shadowveil.videoplatform.entity.Analytic;
 import com.shadowveil.videoplatform.service.AnalyticService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/analytics")
@@ -13,61 +18,53 @@ public class AnalyticController {
 
     private final AnalyticService analyticService;
 
+    @Autowired
     public AnalyticController(AnalyticService analyticService) {
         this.analyticService = analyticService;
     }
 
-    // GET /api/analytics
     @GetMapping
-    public ResponseEntity<List<Analytic>> getAllAnalytics() {
-        List<Analytic> analytics = analyticService.getAllAnalytics();
+    public ResponseEntity<List<AnalyticDto.Response>> getAllAnalytics() {
+        List<AnalyticDto.Response> analytics = analyticService.getAllAnalytics();
         return ResponseEntity.ok(analytics);
     }
 
-    // GET /api/analytics/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Analytic> getAnalyticById(@PathVariable Integer id) {
-        return analyticService.getAnalyticById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<AnalyticDto.Response> getAnalyticById(@PathVariable Integer id) {
+        Optional<AnalyticDto.Response> analytic = analyticService.getAnalyticById(id);
+        return analytic.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // POST /api/analytics
     @PostMapping
-    public ResponseEntity<Analytic> createAnalytic(@RequestBody Analytic analytic) {
-        Analytic createdAnalytic = analyticService.createAnalytic(analytic);
-        return ResponseEntity.ok(createdAnalytic);
+    public ResponseEntity<AnalyticDto.Response> createAnalytic(@Valid @RequestBody AnalyticDto.Request analyticDto) {
+        Analytic createdAnalytic = analyticService.createAnalytic(analyticDto);
+        AnalyticDto.Response responseDto = analyticService.convertToDto(createdAnalytic);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-    // PUT /api/analytics/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Analytic> updateAnalytic(@PathVariable Integer id, @RequestBody Analytic analytic) {
-        try {
-            Analytic updatedAnalytic = analyticService.updateAnalytic(id, analytic);
-            return ResponseEntity.ok(updatedAnalytic);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<AnalyticDto.Response> updateAnalytic(@PathVariable Integer id, @Valid @RequestBody AnalyticDto.Request analyticDto) {
+        Analytic updatedAnalytic = analyticService.updateAnalytic(id, analyticDto);
+        AnalyticDto.Response responseDto = analyticService.convertToDto(updatedAnalytic);
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 
-    // DELETE /api/analytics/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAnalytic(@PathVariable Integer id) {
         analyticService.deleteAnalytic(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/analytics/video/{videoId}
     @GetMapping("/video/{videoId}")
-    public ResponseEntity<List<Analytic>> getAnalyticsByVideoId(@PathVariable Integer videoId) {
-        List<Analytic> analytics = analyticService.getAnalyticsByVideoId(videoId);
+    public ResponseEntity<List<AnalyticDto.Response>> getAnalyticsByVideoId(@PathVariable Integer videoId) {
+        List<AnalyticDto.Response> analytics = analyticService.getAnalyticsByVideoId(videoId);
         return ResponseEntity.ok(analytics);
     }
 
-    // GET /api/analytics/user/{userId}
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Analytic>> getAnalyticsByUserId(@PathVariable Integer userId) {
-        List<Analytic> analytics = analyticService.getAnalyticsByUserId(userId);
+    public ResponseEntity<List<AnalyticDto.Response>> getAnalyticsByUserId(@PathVariable Integer userId) {
+        List<AnalyticDto.Response> analytics = analyticService.getAnalyticsByUserId(userId);
         return ResponseEntity.ok(analytics);
     }
 }

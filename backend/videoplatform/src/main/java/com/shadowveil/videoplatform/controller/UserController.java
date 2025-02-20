@@ -1,12 +1,15 @@
 package com.shadowveil.videoplatform.controller;
 
+import com.shadowveil.videoplatform.dto.UserDto;
 import com.shadowveil.videoplatform.entity.User;
 import com.shadowveil.videoplatform.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -18,40 +21,46 @@ public class UserController {
         this.userService = userService;
     }
 
-    // GET /api/users
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<List<UserDto.Response>> getAllUsers() {
+        List<UserDto.Response> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-    // GET /api/users/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        return userService.getUserById(id)
+    public ResponseEntity<UserDto.Response> getUserById(@PathVariable Integer id) {
+        Optional<UserDto.Response> user = userService.getUserById(id);
+        return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/username/{username}")
+    public ResponseEntity<UserDto.Response> getUserByUsername(@PathVariable String username) {
+        return userService.getUserByUsername(username)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // POST /api/users
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UserDto.Response> getUserByEmail(@PathVariable String email) {
+        return userService.getUserByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return ResponseEntity.ok(createdUser);
+    public ResponseEntity<UserDto.Response> createUser(@Valid @RequestBody UserDto.Request userDto) {
+        User createdUser = userService.createUser(userDto);
+        UserDto.Response responseDto = userService.convertToDto(createdUser); // Convert to Response DTO
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-    // PUT /api/users/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Integer id, @Valid @RequestBody User user) {
-        try {
-            User updatedUser = userService.updateUser(id, user);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UserDto.Response> updateUser(@PathVariable Integer id, @Valid @RequestBody UserDto.Request userDto) {
+        User updatedUser = userService.updateUser(id, userDto);
+        UserDto.Response responseDto = userService.convertToDto(updatedUser);
+        return ResponseEntity.ok(responseDto);
     }
 
-    // DELETE /api/users/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);

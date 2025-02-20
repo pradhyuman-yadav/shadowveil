@@ -1,12 +1,14 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -19,7 +21,7 @@ import java.time.Instant;
 })
 public class Comment {
     @Id
-    @ColumnDefault("nextval('comments_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -33,6 +35,7 @@ public class Comment {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @NotBlank(message = "Comment content cannot be blank") // Moved to DTO, but good to have here too
     @NotNull
     @Column(name = "content", nullable = false, length = Integer.MAX_VALUE)
     private String content;
@@ -40,14 +43,13 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "parent_comment_id")
-    private Comment parentComment;
+    private Comment parentComment; // Self-referencing relationship
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
-
 }

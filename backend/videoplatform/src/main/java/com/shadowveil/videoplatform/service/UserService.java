@@ -1,60 +1,112 @@
 package com.shadowveil.videoplatform.service;
 
+import com.shadowveil.videoplatform.dto.UserDto;
 import com.shadowveil.videoplatform.entity.User;
+import com.shadowveil.videoplatform.exception.BadRequestException;
+import com.shadowveil.videoplatform.exception.ResourceNotFoundException;
 import com.shadowveil.videoplatform.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    @Autowired
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // Retrieve all users.
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<UserDto.Response> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
-    // Retrieve a single user by its ID.
-    public Optional<User> getUserById(Integer id) {
-        return userRepository.findById(id);
+    @Transactional(readOnly = true)
+    public Optional<UserDto.Response> getUserById(Integer id) {
+        return userRepository.findById(id)
+                .map(this::convertToDto);
     }
 
-    // Create a new user.
-    public User createUser(User user) {
+    @Transactional(readOnly = true)
+    public Optional<UserDto.Response> getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(this::convertToDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<UserDto.Response> getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(this::convertToDto);
+    }
+
+    @Transactional
+    public User createUser(UserDto.Request userDto) {
+        if (userRepository.existsByUsername(userDto.username())) {
+            throw new BadRequestException("Username already exists.");
+        }
+        if (userRepository.existsByEmail(userDto.email())) {
+            throw new BadRequestException("Email already exists.");
+        }
+
+        User user = new User();
+        user.setUsername(userDto.username());
+        user.setEmail(userDto.email());
+        user.setPasswordHash(passwordEncoder.encode(userDto.password()));
+        user.setRole(userDto.role());
         return userRepository.save(user);
     }
 
-    // Update an existing user.
-    public User updateUser(Integer id, User userDetails) {
-        return userRepository.findById(id).map(user -> {
-            user.setUsername(userDetails.getUsername());
-            user.setEmail(userDetails.getEmail());
-            user.setPasswordHash(userDetails.getPasswordHash());
-            user.setRole(userDetails.getRole());
-            user.setUpdatedAt(userDetails.getUpdatedAt());
-            return userRepository.save(user);
-        }).orElseThrow(() -> new RuntimeException("User not found with id " + id));
+    @Transactional
+    public User updateUser(Integer id, UserDto.Request userDto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+
+        if (!user.getUsername().equals(userDto.username()) && userRepository.existsByUsername(userDto.username())) {
+            throw new BadRequestException("Username already exists.");
+        }
+        if (!user.getEmail().equals(userDto.email()) && userRepository.existsByEmail(userDto.email())) {
+            throw new BadRequestException("Email already exists.");
+        }
+
+        if (userDto.username() != null) user.setUsername(userDto.username());
+        if (userDto.email() != null) user.setEmail(userDto.email());
+        if (userDto.role() != null) user.setRole(userDto.role());
+
+        if (userDto.password() != null && !userDto.password().isBlank()) {
+            user.setPasswordHash(passwordEncoder.encode(userDto.password()));
+        }
+
+        return userRepository.save(user);
     }
 
-    // Delete a user by its ID.
+    @Transactional
     public void deleteUser(Integer id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User with ID: " + id + " does not exist");
+        }
         userRepository.deleteById(id);
     }
 
-    // Optional: Retrieve a user by username.
-    public Optional<User> getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
-
-    // Optional: Retrieve a user by email.
-    public Optional<User> getUserByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public UserDto.Response convertToDto(User user) {
+        return new UserDto.Response(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+        );
     }
 }

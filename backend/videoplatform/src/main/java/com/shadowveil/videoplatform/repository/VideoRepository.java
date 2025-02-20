@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface VideoRepository extends JpaRepository<Video, Integer> {
 
-    // Retrieve videos for a specific user.
     List<Video> findByUser_Id(Integer userId);
+    List<Video> findByModuleId(Integer moduleId); // Add this
 }

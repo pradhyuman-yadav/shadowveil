@@ -1,12 +1,16 @@
 package com.shadowveil.videoplatform.controller;
 
+import com.shadowveil.videoplatform.dto.CommentDto;
 import com.shadowveil.videoplatform.entity.Comment;
 import com.shadowveil.videoplatform.service.CommentService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -14,68 +18,59 @@ public class CommentController {
 
     private final CommentService commentService;
 
+    @Autowired
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
     }
 
-    // GET /api/comments
     @GetMapping
-    public ResponseEntity<List<Comment>> getAllComments() {
-        List<Comment> comments = commentService.getAllComments();
+    public ResponseEntity<List<CommentDto.Response>> getAllComments() {
+        List<CommentDto.Response> comments = commentService.getAllComments();
         return ResponseEntity.ok(comments);
     }
 
-    // GET /api/comments/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Comment> getCommentById(@PathVariable Integer id) {
-        return commentService.getCommentById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CommentDto.Response> getCommentById(@PathVariable Integer id) {
+        Optional<CommentDto.Response> comment = commentService.getCommentById(id);
+        return comment.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // POST /api/comments
     @PostMapping
-    public ResponseEntity<Comment> createComment(@Valid @RequestBody Comment comment) {
-        Comment createdComment = commentService.createComment(comment);
-        return ResponseEntity.ok(createdComment);
+    public ResponseEntity<CommentDto.Response> createComment(@Valid @RequestBody CommentDto.Request commentDto) {
+        Comment createdComment = commentService.createComment(commentDto);
+        CommentDto.Response responseDto = commentService.convertToDto(createdComment); // Convert to DTO
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-    // PUT /api/comments/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Comment> updateComment(@PathVariable Integer id, @Valid @RequestBody Comment comment) {
-        try {
-            Comment updatedComment = commentService.updateComment(id, comment);
-            return ResponseEntity.ok(updatedComment);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<CommentDto.Response> updateComment(@PathVariable Integer id, @Valid @RequestBody CommentDto.Request commentDto) {
+        Comment updatedComment = commentService.updateComment(id, commentDto);
+        CommentDto.Response responseDto = commentService.convertToDto(updatedComment);
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 
-    // DELETE /api/comments/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Integer id) {
         commentService.deleteComment(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/comments/video/{videoId}
     @GetMapping("/video/{videoId}")
-    public ResponseEntity<List<Comment>> getCommentsByVideoId(@PathVariable Integer videoId) {
-        List<Comment> comments = commentService.getCommentsByVideoId(videoId);
+    public ResponseEntity<List<CommentDto.Response>> getCommentsByVideoId(@PathVariable Integer videoId) {
+        List<CommentDto.Response> comments = commentService.getCommentsByVideoId(videoId);
         return ResponseEntity.ok(comments);
     }
 
-    // GET /api/comments/user/{userId}
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Comment>> getCommentsByUserId(@PathVariable Integer userId) {
-        List<Comment> comments = commentService.getCommentsByUserId(userId);
+    public ResponseEntity<List<CommentDto.Response>> getCommentsByUserId(@PathVariable Integer userId) {
+        List<CommentDto.Response> comments = commentService.getCommentsByUserId(userId);
         return ResponseEntity.ok(comments);
     }
 
-    // GET /api/comments/parent/{parentCommentId}
     @GetMapping("/parent/{parentCommentId}")
-    public ResponseEntity<List<Comment>> getChildComments(@PathVariable Integer parentCommentId) {
-        List<Comment> comments = commentService.getChildComments(parentCommentId);
+    public ResponseEntity<List<CommentDto.Response>> getChildComments(@PathVariable Integer parentCommentId) {
+        List<CommentDto.Response> comments = commentService.getChildComments(parentCommentId);
         return ResponseEntity.ok(comments);
     }
 }

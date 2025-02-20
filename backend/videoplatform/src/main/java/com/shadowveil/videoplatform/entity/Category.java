@@ -1,13 +1,14 @@
 package com.shadowveil.videoplatform.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -17,20 +18,22 @@ import java.time.Instant;
 })
 public class Category {
     @Id
-    @ColumnDefault("nextval('categories_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Size(max = 100)
-    @NotNull
+    @Size(max = 100, message = "Category name must be less than 100 characters")
+    @NotBlank(message = "Category name cannot be blank")
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Course> courses;
 }

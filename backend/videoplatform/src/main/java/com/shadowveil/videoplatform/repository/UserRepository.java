@@ -1,3 +1,4 @@
+// src/main/java/com/shadowveil/videoplatform/repository/UserRepository.java
 package com.shadowveil.videoplatform.repository;
 
 import com.shadowveil.videoplatform.entity.User;
@@ -8,10 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-
-    // Find a user by their username.
     Optional<User> findByUsername(String username);
-
-    // Find a user by their email.
     Optional<User> findByEmail(String email);
+    boolean existsByUsername(String username); // Check if username exists
+    boolean existsByEmail(String email);       // Check if email exists
 }
