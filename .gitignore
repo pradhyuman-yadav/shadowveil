@@ -11,6 +11,7 @@
 !.yarn/versions
 
 /frontend-doctor/node_modules
+/frontend-doctor/.next
 
 #Backend
 backend/videoplatform/.idea
